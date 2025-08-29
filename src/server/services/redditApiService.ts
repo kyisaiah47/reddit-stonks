@@ -91,8 +91,20 @@ export class RedditApiService {
       const username = process.env.REDDIT_USERNAME;
       const password = process.env.REDDIT_PASSWORD;
 
+      console.log('🔍 Environment check:', {
+        hasClientId: !!clientId,
+        hasClientSecret: !!clientSecret,
+        hasUsername: !!username,
+        hasPassword: !!password,
+        clientIdLength: clientId?.length || 0,
+        clientSecretLength: clientSecret?.length || 0,
+        nodeEnv: process.env.NODE_ENV,
+        envKeys: Object.keys(process.env).filter(k => k.startsWith('REDDIT_'))
+      });
+
       if (!clientId || !clientSecret) {
-        console.error('Reddit API credentials not found in environment variables');
+        console.error('❌ Reddit API credentials not found in environment variables');
+        console.error('Available REDDIT_ env vars:', Object.keys(process.env).filter(k => k.startsWith('REDDIT_')));
         return;
       }
 
@@ -112,6 +124,10 @@ export class RedditApiService {
         });
       }
 
+      console.log('🔑 Attempting Reddit authentication...');
+      console.log(`📝 Auth URL: ${this.REDDIT_OAUTH_URL}`);
+      console.log(`🔐 Auth type: ${username && password ? 'password' : 'client_credentials'}`);
+      
       const response = await axios.post<RedditAuthResponse>(
         this.REDDIT_OAUTH_URL,
         authData,
@@ -136,8 +152,14 @@ export class RedditApiService {
       this.client.defaults.headers['Authorization'] = `Bearer ${this.accessToken}`;
       this.client.defaults.baseURL = this.REDDIT_API_BASE;
 
-    } catch (error) {
-      console.error('❌ Reddit API authentication failed:', error);
+    } catch (error: any) {
+      console.error('❌ Reddit API authentication failed:', error?.response?.status, error?.response?.statusText);
+      console.error('📋 Response data:', error?.response?.data);
+      console.error('🔧 Request config:', {
+        url: error?.config?.url,
+        method: error?.config?.method,
+        headers: error?.config?.headers
+      });
       this.accessToken = null;
     }
   }
@@ -445,6 +467,10 @@ export class RedditApiService {
   async refreshToken(): Promise<void> {
     this.accessToken = null;
     await this.authenticate();
+  }
+
+  async makeRequest(endpoint: string): Promise<any> {
+    return await this.rateLimitedRequest(endpoint);
   }
 }
 

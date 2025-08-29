@@ -26,37 +26,12 @@ interface NewsResponse {
 interface SimpleDashboardProps {
   portfolio: Portfolio | null;
   marketData: MarketDataResponse | null;
+  newsData: NewsResponse | null;
+  newsError: string | null;
   onStockClick: (stockId: string) => void;
 }
 
-export const SimpleDashboard = ({ portfolio, marketData, onStockClick }: SimpleDashboardProps) => {
-  const [news, setNews] = useState<NewsResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchNews = async () => {
-      try {
-        setError(null);
-        const response = await fetch('/api/news?limit=15');
-        if (response.ok) {
-          const newsData = await response.json();
-          setNews(newsData);
-        } else {
-          setError('Failed to fetch Reddit news');
-        }
-      } catch (err) {
-        setError('Network error fetching news');
-        console.error('News fetch error:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchNews();
-    const interval = setInterval(fetchNews, 10 * 60 * 1000); // Update every 10 minutes
-    return () => clearInterval(interval);
-  }, []);
+export const SimpleDashboard = ({ portfolio, marketData, newsData, newsError, onStockClick }: SimpleDashboardProps) => {
 
   const formatTimeAgo = (dateString: string) => {
     const now = new Date();
@@ -89,33 +64,6 @@ export const SimpleDashboard = ({ portfolio, marketData, onStockClick }: SimpleD
 
   if (!marketData) return null;
 
-  if (loading) {
-    return (
-      <div className="w-full bg-gray-900 text-white">
-        {/* Market Status Bar */}
-        <div className="bg-gradient-to-r from-orange-600 to-red-600 px-4 py-3 flex-shrink-0">
-          <div className="flex justify-between items-center text-sm">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                <span className="font-bold">REDDIT STONKS</span>
-              </div>
-              <span className="font-medium text-orange-200">Loading News...</span>
-            </div>
-          </div>
-        </div>
-        
-        <div className="flex items-center justify-center min-h-screen">
-          <motion.div 
-            className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full"
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-          />
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="w-full bg-gray-900 text-white">
       {/* Market Status Bar */}
@@ -127,31 +75,31 @@ export const SimpleDashboard = ({ portfolio, marketData, onStockClick }: SimpleD
               <span className="font-bold">REDDIT STONKS NEWS</span>
             </div>
             <span className="font-medium text-orange-200">
-              📰 {news?.posts.length || 0} Posts
+              📰 {newsData?.posts.length || 0} Posts
             </span>
           </div>
           <span className="text-xs opacity-75">
-            {news?.lastUpdated ? new Date(news.lastUpdated).toLocaleTimeString() : ''}
+            {newsData?.lastUpdated ? new Date(newsData.lastUpdated).toLocaleTimeString() : ''}
           </span>
         </div>
       </div>
 
       {/* News Feed */}
       <div className="p-4 space-y-4">
-        {error ? (
+        {newsError ? (
           <motion.div 
             className="bg-red-900/20 border border-red-500/30 rounded-lg p-4 text-center"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
           >
-            <p className="text-red-400">{error}</p>
+            <p className="text-red-400">{newsError}</p>
           </motion.div>
         ) : (
           <>
 
             {/* News Posts */}
             <div className="space-y-3">
-              {news?.posts.map((post, index) => (
+              {newsData?.posts.map((post, index) => (
                 <motion.div
                   key={post.id}
                   className="bg-gray-800 rounded-lg p-4 border border-gray-700 hover:border-orange-500/30 transition-all cursor-pointer"
@@ -212,13 +160,13 @@ export const SimpleDashboard = ({ portfolio, marketData, onStockClick }: SimpleD
               ))}
             </div>
 
-            {(!news?.posts || news.posts.length === 0) && (
+            {(!newsData?.posts || newsData.posts.length === 0) && (
               <motion.div 
                 className="text-center py-12 text-gray-400"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
               >
-                <p>No financial news found from Reddit</p>
+                <p>No Reddit news found</p>
               </motion.div>
             )}
           </>

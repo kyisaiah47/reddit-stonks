@@ -23,16 +23,16 @@ export interface NewsResponse {
 
 class RedditNewsService {
   private readonly NEWS_SUBREDDITS = [
-    'wallstreetbets',
-    'stocks', 
-    'investing',
-    'SecurityAnalysis',
-    'ValueInvesting',
-    'financialindependence',
-    'StockMarket',
-    'pennystocks',
-    'options',
-    'CryptoCurrency'
+    'all',
+    'popular', 
+    'news',
+    'worldnews',
+    'technology',
+    'gaming',
+    'movies',
+    'AskReddit',
+    'todayilearned',
+    'funny'
   ];
 
   private newsCache: NewsResponse | null = null;
@@ -96,15 +96,15 @@ class RedditNewsService {
         this.newsCache = newsResponse;
         this.lastFetchTime = now;
 
-        console.log(`📰 Successfully fetched ${sortedPosts.length} financial news posts from Reddit`);
+        console.log(`📰 Successfully fetched ${sortedPosts.length} Reddit news posts`);
         return newsResponse;
       } else {
-        console.warn('⚠️  No posts fetched from any subreddit, using fallback data');
-        return this.getFallbackNews(limit);
+        console.error('❌ No posts fetched from any subreddit - Reddit API required');
+        throw new Error('No Reddit posts available - API authentication required');
       }
 
     } catch (error) {
-      console.error('❌ Error fetching Reddit financial news:', error);
+      console.error('❌ Error fetching Reddit news:', error);
       
       // Return cached data if available, even if stale
       if (this.newsCache) {
@@ -112,82 +112,11 @@ class RedditNewsService {
         return this.newsCache;
       }
 
-      // Return fallback mock data for demo
-      console.log('📰 Using fallback mock data');
-      return this.getFallbackNews(limit);
+      // No fallback data - throw error
+      throw new Error('Failed to fetch Reddit news - API authentication required');
     }
   }
 
-  private getFallbackNews(limit: number): NewsResponse {
-    const mockPosts: RedditNewsPost[] = [
-      {
-        id: 'mock1',
-        title: '🚀 TSLA hits new all-time high after surprise earnings beat!',
-        author: 'ElonFanBoy420',
-        subreddit: 'wallstreetbets',
-        upvotes: 3420,
-        comments: 892,
-        created: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
-        url: 'https://reddit.com/r/wallstreetbets/mock1',
-        selftext: 'Tesla just posted incredible Q4 numbers. Revenue up 37% YoY. This is going to moon! 🌙',
-        flair: 'DD'
-      },
-      {
-        id: 'mock2', 
-        title: 'AMD vs NVDA: Which semiconductor stock to buy in 2024?',
-        author: 'TechAnalyst',
-        subreddit: 'investing',
-        upvotes: 1567,
-        comments: 423,
-        created: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(), // 4 hours ago
-        url: 'https://reddit.com/r/investing/mock2',
-        selftext: 'Deep dive analysis comparing AMD and NVIDIA fundamentals, market position, and growth prospects...',
-        flair: 'Analysis'
-      },
-      {
-        id: 'mock3',
-        title: 'Market crash incoming? Fed signals more rate hikes',
-        author: 'BearMarketGuru',
-        subreddit: 'stocks',
-        upvotes: 2134,
-        comments: 678,
-        created: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(), // 6 hours ago
-        url: 'https://reddit.com/r/stocks/mock3',
-        selftext: 'Jerome Powell hints at continued aggressive monetary policy. What does this mean for equity valuations?',
-        flair: 'Discussion'
-      },
-      {
-        id: 'mock4',
-        title: 'LOSS: Down $25k on AAPL calls. AMA about poor life choices',
-        author: 'DegenGambler',
-        subreddit: 'wallstreetbets', 
-        upvotes: 5678,
-        comments: 1234,
-        created: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(), // 8 hours ago
-        url: 'https://reddit.com/r/wallstreetbets/mock4',
-        selftext: 'Bought AAPL calls before earnings. Tim Cook has personally destroyed my portfolio. Diamond hands until I die.',
-        flair: 'Loss'
-      },
-      {
-        id: 'mock5',
-        title: 'Warren Buffett increases Berkshire stake in this undervalued stock',
-        author: 'ValueInvestor123',
-        subreddit: 'ValueInvesting',
-        upvotes: 987,
-        comments: 234,
-        created: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(), // 12 hours ago
-        url: 'https://reddit.com/r/ValueInvesting/mock5',
-        selftext: 'Latest 13F filings show Berkshire doubled down on this position. Here\'s why Buffett might be right...',
-        flair: 'News'
-      }
-    ];
-
-    return {
-      posts: mockPosts.slice(0, limit),
-      lastUpdated: new Date().toISOString(),
-      sources: this.NEWS_SUBREDDITS
-    };
-  }
 
   private async fetchSubredditPosts(subreddit: string, limit: number): Promise<RedditNewsPost[]> {
     const data = await redditApiService.makeRequest(`/r/${subreddit}/hot.json?limit=${limit}`);
@@ -300,6 +229,8 @@ class RedditNewsService {
     this.newsCache = null;
     this.lastFetchTime = 0;
   }
+
+
 
   getSystemStatus() {
     return {

@@ -1,4 +1,4 @@
-# 📊 REDDIT STONKS 🚀
+# 📊 STONKS EXCHANGE 🚀
 
 > **"Bloomberg Terminal meets Reddit"** - The ultimate financial trading simulation that gamifies Reddit's social dynamics
 
@@ -31,7 +31,7 @@ A fully interactive trading platform where users buy and sell "shares" in subred
 
 ### **🎯 Enhanced Dashboard**
 ```
-📊 REDDIT STONKS 🚀
+📊 STONKS EXCHANGE 🚀
 ┌─────────────────────────────────────┐
 │ [===== Animated Ticker =====] │
 │ WSB $45.67 🚀 +2.34% • CRYP $78.34  │
@@ -151,7 +151,7 @@ A fully interactive trading platform where users buy and sell "shares" in subred
 ### **Quick Start**
 ```bash
 git clone [your-repo]
-cd reddit-stonks
+cd stonks-exchange
 npm install
 npm run dev
 ```

@@ -42,6 +42,9 @@ export const App = () => {
   const [currentView, setCurrentView] = useState<View>('dashboard');
   const [selectedStockId, setSelectedStockId] = useState<string | null>(null);
   const [selectedStock, setSelectedStock] = useState<SubredditStock | null>(null);
+  const [newsData, setNewsData] = useState<any>(null);
+  const [newsLoading, setNewsLoading] = useState(true);
+  const [newsError, setNewsError] = useState<string | null>(null);
   
   // Get user data from the existing hook
   const { username } = useCounter();
@@ -51,6 +54,30 @@ export const App = () => {
   
   // Market data hook
   const { marketData, loading: marketLoading, error: marketError, refreshData } = useMarketData();
+
+  // Fetch news data at app level
+  useEffect(() => {
+    const fetchNews = async () => {
+      try {
+        setNewsError(null);
+        setNewsLoading(true);
+        const response = await fetch('/api/news?limit=15');
+        if (response.ok) {
+          const data = await response.json();
+          setNewsData(data);
+        } else {
+          setNewsError('Failed to fetch Reddit news');
+        }
+      } catch (err) {
+        setNewsError('Network error fetching news');
+        console.error('News fetch error:', err);
+      } finally {
+        setNewsLoading(false);
+      }
+    };
+
+    fetchNews();
+  }, []);
   
   // Portfolio hook
   const { 
@@ -103,7 +130,7 @@ export const App = () => {
     }
   };
 
-  if (marketLoading && !marketData) {
+  if ((marketLoading && !marketData) || newsLoading) {
     return (
       <motion.div 
         className="flex items-center justify-center min-h-screen bg-gray-900"
@@ -121,7 +148,7 @@ export const App = () => {
             animate={{ opacity: [0.5, 1, 0.5] }}
             transition={{ duration: 2, repeat: Infinity }}
           >
-            Loading market data...
+            Loading Reddit Stonks...
           </motion.p>
         </div>
       </motion.div>
@@ -179,6 +206,8 @@ export const App = () => {
               <SimpleDashboard
                 portfolio={portfolio}
                 marketData={marketData}
+                newsData={newsData}
+                newsError={newsError}
                 onStockClick={handleStockClick}
               />
             )}

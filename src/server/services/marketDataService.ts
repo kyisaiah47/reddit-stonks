@@ -23,12 +23,11 @@ export class MarketDataService {
   }
 
   private async initializeStocks(): Promise<void> {
-    console.log('Initializing stock universe with base prices...');
+    console.log('Initializing stock universe - API data only...');
     
-    // Initialize all stocks with base prices
+    // Only initialize stocks with real Reddit API data
     for (const stockDef of STOCK_UNIVERSE) {
       try {
-        // Try to get real Reddit data first
         const redditData = await redditApiService.fetchSubredditData(stockDef.subreddit);
         
         if (redditData) {
@@ -36,72 +35,32 @@ export class MarketDataService {
           const stock = this.createStockFromData(stockDef, redditData, priceResult);
           this.stockCache.set(stockDef.id, stock);
           pricingEngine.initializePrice(stockDef.id, stock.price);
+          
+          // Initialize trading data
+          this.tradingData.set(stockDef.id, {
+            volume: Math.floor(Math.random() * 10000) + 1000,
+            buyPressure: 0,
+            sellPressure: 0
+          });
+          
           console.log(`✓ Initialized ${stockDef.symbol} at $${stock.price.toFixed(2)}`);
         } else {
-          // Fallback to estimated data
-          const fallbackData = this.createFallbackRedditData(stockDef);
-          const priceResult = pricingEngine.calculateStockPrice(stockDef, fallbackData);
-          const stock = this.createStockFromData(stockDef, fallbackData, priceResult);
-          this.stockCache.set(stockDef.id, stock);
-          pricingEngine.initializePrice(stockDef.id, stock.price);
-          console.log(`⚠ Initialized ${stockDef.symbol} with fallback data at $${stock.price.toFixed(2)}`);
+          console.log(`❌ Skipped ${stockDef.symbol} - no Reddit API data available`);
         }
-
-        // Initialize trading data
-        this.tradingData.set(stockDef.id, {
-          volume: Math.floor(Math.random() * 10000) + 1000,
-          buyPressure: 0,
-          sellPressure: 0
-        });
-
       } catch (error) {
-        console.error(`Failed to initialize ${stockDef.symbol}:`, error);
-        // Use fallback initialization
-        const fallbackData = this.createFallbackRedditData(stockDef);
-        const priceResult = pricingEngine.calculateStockPrice(stockDef, fallbackData);
-        const stock = this.createStockFromData(stockDef, fallbackData, priceResult);
-        this.stockCache.set(stockDef.id, stock);
-        pricingEngine.initializePrice(stockDef.id, stock.price);
+        console.error(`❌ Failed to initialize ${stockDef.symbol}:`, error);
       }
     }
 
-    console.log(`Initialized ${this.stockCache.size} stocks successfully`);
-  }
-
-  private createFallbackRedditData(stockDef: StockDefinition): RedditSubredditData {
-    // Create realistic fallback data based on category and size
-    let baseSubscribers = 100000;
-    
-    // Adjust base subscribers by category
-    switch (stockDef.category) {
-      case 'blue-chip':
-        baseSubscribers = Math.floor(Math.random() * 10000000) + 5000000; // 5M-15M
-        break;
-      case 'meme':
-        baseSubscribers = Math.floor(Math.random() * 3000000) + 1000000; // 1M-4M
-        break;
-      case 'tech-growth':
-        baseSubscribers = Math.floor(Math.random() * 2000000) + 500000; // 500K-2.5M
-        break;
-      case 'entertainment':
-        baseSubscribers = Math.floor(Math.random() * 5000000) + 1000000; // 1M-6M
-        break;
-      default:
-        baseSubscribers = Math.floor(Math.random() * 1000000) + 100000; // 100K-1.1M
+    if (this.stockCache.size === 0) {
+      console.error('⚠️  No stocks initialized - Reddit API not available');
+      throw new Error('Failed to initialize any stocks - Reddit API required');
     }
 
-    return {
-      subreddit: stockDef.subreddit,
-      subscribers: baseSubscribers,
-      activeUsers: Math.floor(baseSubscribers * (0.001 + Math.random() * 0.01)), // 0.1%-1.1% active
-      subscriberGrowth: (Math.random() - 0.5) * 0.02, // -1% to +1% daily growth
-      postActivity: 0.5 + Math.random() * 1.5, // 0.5x to 2.0x normal activity
-      engagementScore: Math.random() * 0.8 + 0.1, // 0.1 to 0.9 engagement
-      viralBoost: Math.random() * 0.3, // 0 to 0.3 viral boost
-      sentiment: (Math.random() - 0.5) * 1.5, // -0.75 to +0.75 sentiment
-      lastUpdated: new Date()
-    };
+    console.log(`✅ Initialized ${this.stockCache.size} stocks with real Reddit API data`);
   }
+
+
 
   private createStockFromData(
     stockDef: StockDefinition, 

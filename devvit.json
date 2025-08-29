@@ -1,6 +1,6 @@
 {
   "$schema": "https://developers.reddit.com/schema/config-file.v1.json",
-  "name": "reddit-stonks",
+  "name": "stonks-exchange",
   "post": {
     "dir": "dist/client",
     "entrypoints": {
@@ -18,7 +18,7 @@
     "items": [
       {
         "label": "Create a new post",
-        "description": "reddit-stonks",
+        "description": "stonks-exchange",
         "location": "subreddit",
         "forUserType": "moderator",
         "endpoint": "/internal/menu/post-create"
