@@ -120,27 +120,22 @@ export const SimpleStocks = ({ stocks, portfolio, onTrade }: SimpleStocksProps) 
                     </div>
                   </div>
                   
-                  <div className="text-right">
-                    <AnimatedPrice
-                      value={stock.price}
-                      change={stock.change}
-                      className="text-lg"
-                      format="price"
-                    />
-                    <div className="flex justify-end mt-1">
-                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-700 text-gray-300 border border-gray-600">
-                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
-                        </svg>
-                        {formatNumber(stock.subscribers)}
-                      </span>
+                  <div className="text-right flex flex-col items-end">
+                    <div className="text-lg font-bold text-white">
+                      {stock.price.toFixed(2)} Ⓒ
+                    </div>
+                    <div className={`text-sm font-medium ${
+                      stock.change > 0 ? 'text-green-400' : 
+                      stock.change < 0 ? 'text-red-400' : 'text-gray-400'
+                    }`}>
+                      {stock.change > 0 ? '+' : ''}{stock.change.toFixed(2)}%
                     </div>
                   </div>
                 </div>
 
-                {/* Progress indicators for market activity */}
-                <div className="mt-3 flex gap-2">
-                  <div className="flex-1 h-1 bg-gray-700 rounded-full overflow-hidden border border-gray-600">
+                {/* Progress bar spanning full width */}
+                <div className="mt-3">
+                  <div className="w-full h-1 bg-gray-700 rounded-full overflow-hidden border border-gray-600">
                     <div 
                       className={`h-full transition-all duration-1000 ${
                         stock.change >= 0 ? 'bg-green-500' : 'bg-red-500'
@@ -150,8 +145,18 @@ export const SimpleStocks = ({ stocks, portfolio, onTrade }: SimpleStocksProps) 
                       }}
                     />
                   </div>
-                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-orange-900 text-orange-300 border border-orange-600">
-                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                </div>
+
+                {/* Chips row at bottom */}
+                <div className="mt-3 flex justify-between items-center">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-700 text-gray-300 border border-gray-600">
+                    <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+                    </svg>
+                    {formatNumber(stock.subscribers)}
+                  </span>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-orange-900 text-orange-300 border border-orange-600">
+                    <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
                     </svg>
                     {(stock.volume / 1000).toFixed(0)}K
