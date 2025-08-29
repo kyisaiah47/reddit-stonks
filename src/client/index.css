@@ -1,24 +1,45 @@
 @import 'tailwindcss';
 
-/* Subtle scrollbar styling */
+/* Prevent horizontal scrollbar */
+html, body {
+  overflow-x: hidden;
+}
+
+/* App-themed scrollbar styling */
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(75, 85, 99, 0.5) transparent;
+  scrollbar-color: rgba(249, 115, 22, 0.6) rgba(31, 41, 55, 0.8);
 }
 
 *::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
 }
 
 *::-webkit-scrollbar-track {
-  background: transparent;
+  background: rgba(31, 41, 55, 0.8);
+  border-radius: 4px;
 }
 
 *::-webkit-scrollbar-thumb {
-  background: rgba(75, 85, 99, 0.5);
-  border-radius: 3px;
+  background: linear-gradient(180deg, rgba(249, 115, 22, 0.8) 0%, rgba(234, 88, 12, 0.9) 100%);
+  border-radius: 4px;
+  border: 1px solid rgba(75, 85, 99, 0.3);
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background: rgba(75, 85, 99, 0.7);
+  background: linear-gradient(180deg, rgba(249, 115, 22, 1) 0%, rgba(234, 88, 12, 1) 100%);
+}
+
+*::-webkit-scrollbar-corner {
+  background: rgba(31, 41, 55, 0.8);
+}
+
+/* Hide scrollbar utility */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar { 
+  display: none;  /* Safari and Chrome */
 }

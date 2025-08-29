@@ -8,6 +8,7 @@ import { getOrCreatePortfolio, executeTrade, getLeaderboard, setMarketData } fro
 import { marketDataService } from './services/marketDataService';
 import { tradingEngine } from './services/tradingEngine';
 import { redditApiService } from './services/redditApiService';
+import { stockSearchService } from './services/stockSearchService';
 import { initializeWebSocketService, getWebSocketService } from './services/websocketService';
 
 // Load environment variables
@@ -164,6 +165,143 @@ router.get<{}, MarketDataResponse | { status: string; message: string }>(
       res.status(500).json({
         status: 'error',
         message: 'Failed to fetch market data'
+      });
+    }
+  }
+);
+
+// Get all stocks (optionally filtered/searched)
+router.get<{}, any | { status: string; message: string }>(
+  '/api/stocks',
+  async (req, res): Promise<void> => {
+    try {
+      const filters = {
+        query: req.query.q as string,
+        category: req.query.category as any,
+        priceMin: req.query.priceMin ? parseFloat(req.query.priceMin as string) : undefined,
+        priceMax: req.query.priceMax ? parseFloat(req.query.priceMax as string) : undefined,
+        changeMin: req.query.changeMin ? parseFloat(req.query.changeMin as string) : undefined,
+        changeMax: req.query.changeMax ? parseFloat(req.query.changeMax as string) : undefined,
+        volumeMin: req.query.volumeMin ? parseFloat(req.query.volumeMin as string) : undefined,
+        isDividendStock: req.query.dividendOnly === 'true' ? true : undefined,
+        sortBy: req.query.sortBy as any,
+        sortOrder: req.query.sortOrder as any,
+        limit: req.query.limit ? parseInt(req.query.limit as string) : undefined
+      };
+
+      const result = stockSearchService.searchStocks(filters);
+      res.json(result);
+    } catch (error) {
+      console.error('Stock search error:', error);
+      res.status(500).json({
+        status: 'error',
+        message: 'Failed to search stocks'
+      });
+    }
+  }
+);
+
+// Get stocks by category
+router.get<{ category: string }, any | { status: string; message: string }>(
+  '/api/stocks/category/:category',
+  async (req, res): Promise<void> => {
+    try {
+      const { category } = req.params;
+      const stocks = stockSearchService.getStocksByCategory(category as any);
+      res.json({ stocks });
+    } catch (error) {
+      console.error('Category stocks error:', error);
+      res.status(500).json({
+        status: 'error',
+        message: 'Failed to fetch stocks by category'
+      });
+    }
+  }
+);
+
+// Get top performers
+router.get<{}, any | { status: string; message: string }>(
+  '/api/stocks/top-gainers',
+  async (req, res): Promise<void> => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 10;
+      const stocks = stockSearchService.getTopGainers(limit);
+      res.json({ stocks });
+    } catch (error) {
+      console.error('Top gainers error:', error);
+      res.status(500).json({
+        status: 'error',
+        message: 'Failed to fetch top gainers'
+      });
+    }
+  }
+);
+
+router.get<{}, any | { status: string; message: string }>(
+  '/api/stocks/top-losers',
+  async (req, res): Promise<void> => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 10;
+      const stocks = stockSearchService.getTopLosers(limit);
+      res.json({ stocks });
+    } catch (error) {
+      console.error('Top losers error:', error);
+      res.status(500).json({
+        status: 'error',
+        message: 'Failed to fetch top losers'
+      });
+    }
+  }
+);
+
+router.get<{}, any | { status: string; message: string }>(
+  '/api/stocks/most-active',
+  async (req, res): Promise<void> => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 10;
+      const stocks = stockSearchService.getMostActive(limit);
+      res.json({ stocks });
+    } catch (error) {
+      console.error('Most active error:', error);
+      res.status(500).json({
+        status: 'error',
+        message: 'Failed to fetch most active stocks'
+      });
+    }
+  }
+);
+
+// Get search suggestions
+router.get<{}, any | { status: string; message: string }>(
+  '/api/search/suggestions',
+  async (req, res): Promise<void> => {
+    try {
+      const query = req.query.q as string;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const suggestions = stockSearchService.searchSuggestions(query, limit);
+      res.json({ suggestions });
+    } catch (error) {
+      console.error('Search suggestions error:', error);
+      res.status(500).json({
+        status: 'error',
+        message: 'Failed to fetch search suggestions'
+      });
+    }
+  }
+);
+
+// Get market overview with category breakdown
+router.get<{}, any | { status: string; message: string }>(
+  '/api/market/overview',
+  async (req, res): Promise<void> => {
+    try {
+      const overview = stockSearchService.getMarketOverview();
+      res.json(overview);
+    } catch (error) {
+      console.error('Market overview error:', error);
+      res.status(500).json({
+        status: 'error',
+        message: 'Failed to fetch market overview'
       });
     }
   }

@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { SubredditStock, Portfolio } from '../../shared/types/api';
+import { useState, useEffect, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { SubredditStock, Portfolio, StockCategory } from '../../shared/types/api';
 import { AnimatedPrice } from './AnimatedPrice';
 import { formatNumber } from '../utils/formatNumber';
 
@@ -12,6 +12,58 @@ interface SimpleStocksProps {
 
 export const SimpleStocks = ({ stocks, portfolio, onTrade }: SimpleStocksProps) => {
   const [draggedStock, setDraggedStock] = useState<string | null>(null);
+  const [dragDirection, setDragDirection] = useState<'left' | 'right' | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<StockCategory | null>(null);
+  const [sortBy, setSortBy] = useState<'change' | 'price' | 'volume' | 'name'>('change');
+  const [showSearch, setShowSearch] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+
+  const categories: Array<{ key: StockCategory | null; label: string; icon: string }> = [
+    { key: null, label: 'All', icon: '🌟' },
+    { key: 'meme', label: 'Meme', icon: '🚀' },
+    { key: 'blue-chip', label: 'Blue Chip', icon: '💎' },
+    { key: 'tech-growth', label: 'Tech', icon: '💻' },
+    { key: 'entertainment', label: 'Fun', icon: '🎮' },
+    { key: 'sports', label: 'Sports', icon: '⚽' },
+  ];
+
+  // Filter and search stocks
+  const filteredStocks = useMemo(() => {
+    let filtered = [...stocks];
+
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(stock => 
+        stock.symbol.toLowerCase().includes(query) ||
+        stock.name.toLowerCase().includes(query)
+      );
+    }
+
+    // Apply category filter
+    if (selectedCategory) {
+      filtered = filtered.filter(stock => stock.category === selectedCategory);
+    }
+
+    // Apply sorting
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'change':
+          return b.change - a.change;
+        case 'price':
+          return b.price - a.price;
+        case 'volume':
+          return b.volume - a.volume;
+        case 'name':
+          return a.symbol.localeCompare(b.symbol);
+        default:
+          return 0;
+      }
+    });
+
+    return filtered;
+  }, [stocks, searchQuery, selectedCategory, sortBy]);
 
   const handleSwipe = (stockId: string, direction: 'left' | 'right') => {
     const stock = stocks.find(s => s.id === stockId);
@@ -36,33 +88,196 @@ export const SimpleStocks = ({ stocks, portfolio, onTrade }: SimpleStocksProps) 
 
   return (
     <div className="w-full bg-gray-900 text-white">
-      {/* Header */}
-      <div className="bg-gray-800 px-4 py-4 flex-shrink-0">
-        <h1 className="text-xl font-bold text-center">Browse Stocks</h1>
-        <p className="text-sm text-gray-400 text-center mt-1">
+      {/* Header with Toggle Buttons */}
+      <div className="bg-gray-800 px-3 py-2 flex-shrink-0">
+        <h1 className="text-lg font-bold text-center">Browse Stocks</h1>
+        <p className="text-xs text-gray-400 text-center">
           Swipe right to buy • Swipe left to sell
         </p>
+        
+        {/* Quick Toggle Buttons */}
+        <div className="flex justify-center gap-1.5 mt-2">
+          <motion.button
+            onClick={() => setShowSearch(!showSearch)}
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+              showSearch || searchQuery
+                ? 'bg-orange-500 text-white'
+                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+            }`}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            🔍 Search
+          </motion.button>
+          
+          <motion.button
+            onClick={() => setShowFilters(!showFilters)}
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+              showFilters || selectedCategory
+                ? 'bg-orange-500 text-white'
+                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+            }`}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            🏷️ Filter
+          </motion.button>
+        </div>
       </div>
 
+      {/* Collapsible Search Bar */}
+      <AnimatePresence>
+        {showSearch && (
+          <motion.div 
+            className="bg-gray-800 px-3 pb-2"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
+                <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <input
+                type="text"
+                placeholder="Search stocks..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-8 pr-8 py-2 text-sm bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-transparent"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute inset-y-0 right-0 pr-2 flex items-center"
+                >
+                  <svg className="h-4 w-4 text-gray-400 hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Collapsible Filters */}
+      <AnimatePresence>
+        {showFilters && (
+          <motion.div 
+            className="bg-gray-800 px-3 pb-2"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            {/* Category Filter */}
+            <div className="mb-2">
+              <h3 className="text-xs font-medium text-gray-300 mb-1">Categories</h3>
+              <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
+                {categories.map((category) => (
+                  <motion.button
+                    key={category.key || 'all'}
+                    onClick={() => setSelectedCategory(category.key)}
+                    className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+                      selectedCategory === category.key
+                        ? 'bg-orange-500 text-white'
+                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                    }`}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <span className="text-xs">{category.icon}</span>
+                    {category.label}
+                  </motion.button>
+                ))}
+              </div>
+            </div>
+
+            {/* Sort Options */}
+            <div>
+              <h3 className="text-xs font-medium text-gray-300 mb-1">Sort by</h3>
+              <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
+                {[
+                  { key: 'change', label: 'Trending', icon: '📈' },
+                  { key: 'price', label: 'Price', icon: '💰' },
+                  { key: 'volume', label: 'Volume', icon: '📊' },
+                  { key: 'name', label: 'A-Z', icon: '🔤' },
+                ].map((sort) => (
+                  <motion.button
+                    key={sort.key}
+                    onClick={() => setSortBy(sort.key as any)}
+                    className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
+                      sortBy === sort.key
+                        ? 'bg-orange-500 text-white'
+                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                    }`}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <span className="text-xs">{sort.icon}</span>
+                    {sort.label}
+                  </motion.button>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Results Count */}
+      {(searchQuery || selectedCategory) && (
+        <div className="px-3 py-1 bg-gray-900">
+          <p className="text-xs text-gray-400 text-center">
+            Found {filteredStocks.length} of {stocks.length} stocks
+            {searchQuery && ` matching "${searchQuery}"`}
+            {selectedCategory && ` in ${categories.find(c => c.key === selectedCategory)?.label}`}
+          </p>
+        </div>
+      )}
+
       {/* Stocks Grid */}
-      <div className="p-4">
-        <div className="grid grid-cols-1 gap-4">
-          {stocks.map((stock, index) => {
+      <div className="p-3">
+        <AnimatePresence>
+          <div className="grid grid-cols-1 gap-3">
+            {filteredStocks.map((stock, index) => {
             const holding = portfolio?.holdings.find(h => h.stockId === stock.id);
             
             return (
               <motion.div
                 key={stock.id}
-                className="bg-gray-800 rounded-xl p-4 border border-gray-700 hover:border-orange-500/30 relative cursor-grab active:cursor-grabbing transition-colors"
+                className={`rounded-xl p-4 border relative cursor-grab active:cursor-grabbing transition-all duration-200 ${
+                  draggedStock === stock.id && dragDirection === 'right'
+                    ? 'bg-green-800/50 border-green-500/70 shadow-lg shadow-green-500/20'
+                    : draggedStock === stock.id && dragDirection === 'left'
+                    ? 'bg-orange-800/50 border-orange-500/70 shadow-lg shadow-orange-500/20'
+                    : 'bg-gray-800 border-gray-700 hover:border-orange-500/30'
+                }`}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
                 drag="x"
                 dragConstraints={{ left: 0, right: 0 }}
                 dragElastic={0.2}
-                onDragStart={() => setDraggedStock(stock.id)}
+                onDragStart={() => {
+                  setDraggedStock(stock.id);
+                  setDragDirection(null);
+                }}
+                onDrag={(_, info) => {
+                  const threshold = 30;
+                  if (info.offset.x > threshold) {
+                    setDragDirection('right'); // Buy direction
+                  } else if (info.offset.x < -threshold) {
+                    setDragDirection('left'); // Sell direction
+                  } else {
+                    setDragDirection(null);
+                  }
+                }}
                 onDragEnd={(_, info) => {
                   setDraggedStock(null);
+                  setDragDirection(null);
                   const threshold = 50;
                   if (info.offset.x > threshold) {
                     handleSwipe(stock.id, 'right'); // Buy
@@ -72,9 +287,25 @@ export const SimpleStocks = ({ stocks, portfolio, onTrade }: SimpleStocksProps) 
                 }}
                 whileHover={{ scale: 1.01 }}
                 style={{
-                  opacity: draggedStock === stock.id ? 0.8 : 1,
+                  opacity: draggedStock === stock.id ? 0.9 : 1,
                 }}
               >
+                {/* Buy/Sell Action Indicators */}
+                {draggedStock === stock.id && dragDirection === 'right' && (
+                  <div className="absolute right-4 top-1/2 transform -translate-y-1/2 z-20">
+                    <div className="bg-green-500 text-white px-3 py-2 rounded-full text-sm font-bold flex items-center gap-2">
+                      💰 BUY
+                    </div>
+                  </div>
+                )}
+                
+                {draggedStock === stock.id && dragDirection === 'left' && (
+                  <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-20">
+                    <div className="bg-orange-500 text-white px-3 py-2 rounded-full text-sm font-bold flex items-center gap-2">
+                      💸 SELL
+                    </div>
+                  </div>
+                )}
 
                 <div className="flex justify-between items-start relative z-10">
                   <div className="flex items-center gap-3">
@@ -165,7 +396,8 @@ export const SimpleStocks = ({ stocks, portfolio, onTrade }: SimpleStocksProps) 
               </motion.div>
             );
           })}
-        </div>
+          </div>
+        </AnimatePresence>
       </div>
     </div>
   );
