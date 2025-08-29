@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
+import { formatNumber } from '../utils/formatNumber';
 
 interface AnimatedPriceProps {
   value: number;
@@ -8,16 +9,18 @@ interface AnimatedPriceProps {
   className?: string;
   showChange?: boolean;
   animate?: boolean;
+  format?: 'currency' | 'price' | 'number' | 'none';
 }
 
 export const AnimatedPrice = ({ 
   value, 
   change = 0, 
-  prefix = '$', 
-  suffix = '', 
+  prefix = '', 
+  suffix = ' Ⓒ', 
   className = '',
   showChange = true,
-  animate = true
+  animate = true,
+  format = 'currency'
 }: AnimatedPriceProps) => {
   const [displayValue, setDisplayValue] = useState(value);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -73,7 +76,18 @@ export const AnimatedPrice = ({
   }, [value, animate]);
 
   const formatValue = (val: number): string => {
-    return val.toFixed(2);
+    switch (format) {
+      case 'currency':
+        return formatNumber(val);
+      case 'price':
+        return val.toFixed(2);
+      case 'number':
+        return formatNumber(val);
+      case 'none':
+        return val.toFixed(2);
+      default:
+        return formatNumber(val);
+    }
   };
 
   const getChangeColor = (): string => {

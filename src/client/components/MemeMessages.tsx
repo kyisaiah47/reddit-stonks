@@ -106,10 +106,10 @@ const MemeMessage = ({ message, type, onClose, duration = 3000 }: MemeMessagePro
         };
       case 'info':
         return {
-          bg: 'bg-blue-900',
-          border: 'border-blue-500',
-          text: 'text-blue-400', 
-          shadow: 'shadow-blue-500/50'
+          bg: 'bg-orange-900',
+          border: 'border-orange-500',
+          text: 'text-orange-400', 
+          shadow: 'shadow-orange-500/50'
         };
     }
   };

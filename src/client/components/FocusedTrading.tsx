@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { SubredditStock, Portfolio } from '../../shared/types/api';
 import { AnimatedPrice } from './AnimatedPrice';
+import { formatNumber } from '../utils/formatNumber';
 
 interface FocusedTradingProps {
   selectedStock: SubredditStock | null;
@@ -42,7 +43,7 @@ export const FocusedTrading = ({ selectedStock, portfolio, onTrade, onBack }: Fo
       <div className="bg-gray-800 px-4 py-3 flex items-center gap-3 flex-shrink-0">
         <motion.button
           onClick={onBack}
-          className="text-blue-400 text-xl"
+          className="text-orange-500 text-xl"
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
         >
@@ -57,18 +58,37 @@ export const FocusedTrading = ({ selectedStock, portfolio, onTrade, onBack }: Fo
       {/* Stock Info Card */}
       <div className="p-4 flex-shrink-0">
         <motion.div
-          className="bg-gray-800 rounded-2xl p-6 border border-gray-700"
+          className="bg-gray-800 rounded-2xl p-6 border border-gray-700 hover:border-orange-500/30 transition-colors"
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
         >
           <div className="text-center">
-            <div className="text-4xl mb-2">
-              {selectedStock.change > 5 ? '🚀' : 
-               selectedStock.change > 2 ? '📈' : 
-               selectedStock.change > 0 ? '↗️' : 
-               selectedStock.change === 0 ? '➡️' : 
-               selectedStock.change > -2 ? '↘️' : 
-               selectedStock.change > -5 ? '📉' : '💀'}
+            <div className="mb-2">
+              {selectedStock.change > 2 ? (
+                <svg className="w-12 h-12 text-green-500 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                </svg>
+              ) : selectedStock.change > 0 ? (
+                <svg className="w-12 h-12 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              ) : selectedStock.change === 0 ? (
+                <svg className="w-12 h-12 text-gray-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+                </svg>
+              ) : selectedStock.change > -2 ? (
+                <svg className="w-12 h-12 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
+                </svg>
+              ) : selectedStock.change > -5 ? (
+                <svg className="w-12 h-12 text-red-500 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+              ) : (
+                <svg className="w-12 h-12 text-red-600 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              )}
             </div>
             <AnimatedPrice
               value={selectedStock.price}
@@ -103,7 +123,7 @@ export const FocusedTrading = ({ selectedStock, portfolio, onTrade, onBack }: Fo
                   setShares(1);
                 }}
               >
-                BUY 🚀
+                BUY
               </button>
               <button
                 className={`flex-1 py-3 rounded-lg font-bold transition-all ${
@@ -116,12 +136,12 @@ export const FocusedTrading = ({ selectedStock, portfolio, onTrade, onBack }: Fo
                   setShares(1);
                 }}
               >
-                SELL 📉
+                SELL
               </button>
             </div>
 
             {/* Quantity Section */}
-            <div className="bg-gray-800 rounded-xl p-4">
+            <div className="bg-gray-800 rounded-xl p-4 border border-gray-700 hover:border-orange-500/20 transition-colors">
               <div className="text-center mb-4">
                 <div className="text-sm text-gray-400 mb-2">Shares</div>
                 <div className="text-4xl font-bold">{shares.toLocaleString()}</div>
@@ -135,7 +155,7 @@ export const FocusedTrading = ({ selectedStock, portfolio, onTrade, onBack }: Fo
                     onClick={() => setShares(amount)}
                     className={`py-2 rounded-lg text-sm font-medium transition-all ${
                       shares === amount 
-                        ? 'bg-blue-600 text-white' 
+                        ? 'bg-orange-500 text-white' 
                         : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                     }`}
                     whileHover={{ scale: 1.02 }}
@@ -151,23 +171,23 @@ export const FocusedTrading = ({ selectedStock, portfolio, onTrade, onBack }: Fo
                 type="number"
                 value={shares}
                 onChange={(e) => setShares(Math.max(1, parseInt(e.target.value) || 1))}
-                className="w-full bg-gray-700 rounded-lg px-4 py-3 text-center text-xl font-bold focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full bg-gray-700 rounded-lg px-4 py-3 text-center text-xl font-bold focus:outline-none focus:ring-2 focus:ring-orange-500"
                 min="1"
                 max={tradeType === 'buy' ? maxBuyShares : maxSellShares}
               />
             </div>
 
             {/* Trade Summary */}
-            <div className="bg-gray-800 rounded-xl p-4">
+            <div className="bg-gray-800 rounded-xl p-4 border border-gray-700 hover:border-orange-500/20 transition-colors">
               <div className="flex justify-between items-center mb-2">
                 <span className="text-gray-400">Total Value</span>
-                <span className="text-xl font-bold">${tradeValue.toLocaleString()}</span>
+                <span className="text-xl font-bold">{formatNumber(tradeValue)} Ⓒ</span>
               </div>
               <div className="flex justify-between items-center text-sm">
                 <span className="text-gray-400">Available</span>
                 <span>
                   {tradeType === 'buy' ? 
-                    `$${portfolio?.cash.toLocaleString() || '0'}` : 
+                    `${formatNumber(portfolio?.cash || 0)} Ⓒ` : 
                     `${maxSellShares} shares`
                   }
                 </span>
@@ -199,8 +219,16 @@ export const FocusedTrading = ({ selectedStock, portfolio, onTrade, onBack }: Fo
             animate={{ opacity: 1, scale: 1 }}
           >
             <div className="text-center">
-              <div className="text-6xl mb-4">
-                {tradeType === 'buy' ? '🚀' : '📉'}
+              <div className="mb-4">
+                {tradeType === 'buy' ? (
+                  <svg className="w-16 h-16 mx-auto text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                  </svg>
+                ) : (
+                  <svg className="w-16 h-16 mx-auto text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                )}
               </div>
               <h2 className="text-2xl font-bold mb-2">
                 Confirm {tradeType === 'buy' ? 'Buy' : 'Sell'} Order
@@ -210,7 +238,7 @@ export const FocusedTrading = ({ selectedStock, portfolio, onTrade, onBack }: Fo
               </div>
             </div>
 
-            <div className="bg-gray-800 rounded-xl p-6">
+            <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 hover:border-orange-500/30 transition-colors">
               <div className="space-y-3 text-lg">
                 <div className="flex justify-between">
                   <span>Shares:</span>
@@ -218,12 +246,12 @@ export const FocusedTrading = ({ selectedStock, portfolio, onTrade, onBack }: Fo
                 </div>
                 <div className="flex justify-between">
                   <span>Price:</span>
-                  <span className="font-bold">${selectedStock.price}</span>
+                  <span className="font-bold">{selectedStock.price.toFixed(2)} Ⓒ</span>
                 </div>
                 <div className="border-t border-gray-600 pt-3">
                   <div className="flex justify-between">
                     <span>Total:</span>
-                    <span className="font-bold text-xl">${tradeValue.toLocaleString()}</span>
+                    <span className="font-bold text-xl">{formatNumber(tradeValue)} Ⓒ</span>
                   </div>
                 </div>
               </div>

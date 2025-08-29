@@ -68,7 +68,7 @@ export const Portfolio = ({ portfolio, onStockClick }: PortfolioProps) => {
   const SortButton = ({ field, children }: { field: typeof sortBy; children: React.ReactNode }) => (
     <button
       onClick={() => handleSort(field)}
-      className="flex items-center gap-1 hover:text-blue-600"
+      className="flex items-center gap-1 hover:text-orange-500"
     >
       {children}
       {sortBy === field && (
@@ -226,7 +226,7 @@ export const Portfolio = ({ portfolio, onStockClick }: PortfolioProps) => {
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div
                       className={`h-2 rounded-full ${
-                        item.symbol === 'CASH' ? 'bg-gray-400' : 'bg-blue-500'
+                        item.symbol === 'CASH' ? 'bg-gray-400' : 'bg-orange-500'
                       }`}
                       style={{ width: `${item.percentage}%` }}
                     ></div>
