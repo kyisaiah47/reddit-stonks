@@ -18,6 +18,17 @@ export type DecrementResponse = {
 };
 
 // Stock Exchange API Types
+export type StockCategory = 
+  | 'meme' 
+  | 'blue-chip' 
+  | 'tech-growth' 
+  | 'entertainment' 
+  | 'lifestyle' 
+  | 'sports' 
+  | 'creative' 
+  | 'science' 
+  | 'niche';
+
 export type SubredditStock = {
   id: string;
   symbol: string; // e.g., "WSB" for r/wallstreetbets
@@ -28,6 +39,18 @@ export type SubredditStock = {
   marketCap: number;
   subscribers: number;
   dailyActiveUsers?: number | undefined;
+  category: StockCategory;
+  volatilityMultiplier: number; // Category-based volatility modifier
+  isDividendStock: boolean;
+  basePrice: number; // Price before real-time adjustments
+  priceDrivers: {
+    subscriberGrowth: number;
+    postActivity: number;
+    engagementScore: number;
+    viralBoost: number;
+    sentiment: number;
+    tradingImpact: number;
+  };
 };
 
 export type Portfolio = {
@@ -37,6 +60,12 @@ export type Portfolio = {
   holdings: Holding[];
   totalReturn: number;
   totalReturnPercent: number;
+  dividendIncome: number;
+  riskScore: number;
+  diversificationScore: number;
+  sectorAllocations: {
+    [category in StockCategory]: number;
+  };
 };
 
 export type Holding = {
@@ -54,6 +83,26 @@ export type MarketDataResponse = {
   stocks: SubredditStock[];
   marketSentiment: 'bullish' | 'bearish' | 'neutral';
   lastUpdated: string;
+  marketEvents: MarketEvent[];
+  sectorPerformance: SectorPerformance[];
+};
+
+export type MarketEvent = {
+  id: string;
+  type: 'drama' | 'ama' | 'admin-action' | 'viral' | 'news';
+  subredditId: string;
+  title: string;
+  impact: number; // Price impact multiplier
+  duration: number; // Duration in minutes
+  timestamp: string;
+};
+
+export type SectorPerformance = {
+  category: StockCategory;
+  avgChange: number;
+  volume: number;
+  topGainer: string;
+  topLoser: string;
 };
 
 export type PortfolioResponse = {
@@ -92,8 +141,32 @@ export type LeaderboardEntry = {
   totalReturnPercent: number;
 };
 
+export type Achievement = {
+  id: string;
+  name: string;
+  description: string;
+  type: 'diamond-hands' | 'paper-hands' | 'diversification' | 'sector-specialist' | 'risk-taker' | 'value-investor';
+  criteria: {
+    [key: string]: number;
+  };
+  reward: {
+    type: 'cash' | 'multiplier' | 'badge';
+    value: number;
+  };
+  unlockedAt?: string;
+};
+
+export type UserAchievements = {
+  userId: string;
+  achievements: Achievement[];
+  progress: {
+    [achievementId: string]: number;
+  };
+};
+
 export type LeaderboardResponse = {
   leaderboard: LeaderboardEntry[];
   userRank?: number;
   totalUsers: number;
+  achievements?: UserAchievements;
 };
