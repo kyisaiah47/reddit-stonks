@@ -39,15 +39,6 @@ export const StreamlinedPortfolio = ({ portfolio, onStockClick }: StreamlinedPor
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
         >
-          <div className="text-center mb-6">
-            <AnimatedPrice
-              value={portfolio.totalValue}
-              className="text-4xl font-black text-white block"
-              format="currency"
-            />
-            <div className="text-gray-400 text-sm">Total Value</div>
-          </div>
-
           <div className="grid grid-cols-3 gap-4 text-center">
             <div>
               <AnimatedPrice

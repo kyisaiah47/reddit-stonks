@@ -5,34 +5,24 @@ class TradingService {
   private readonly STARTING_CASH = 10000;
 
   async getPortfolio(userId: string): Promise<Portfolio> {
-    // First try to get from localStorage (faster)
-    const storedPortfolio = storageService.getPortfolio(userId);
-    if (storedPortfolio) {
-      console.log(`📊 Loaded portfolio for ${userId} from localStorage`);
-      return storedPortfolio;
-    }
-
-    // Fallback to API call
     try {
       const response = await fetch(`/api/portfolio?userId=${userId}`);
       if (response.ok) {
         const data = await response.json();
         const portfolio = data.portfolio;
         
-        // Save to localStorage for next time
-        storageService.savePortfolio(userId, portfolio);
-        console.log(`📊 Loaded portfolio for ${userId} from API and cached`);
-        
+        console.log(`📊 Loaded portfolio for ${userId} from Redis via API`);
         return portfolio;
+      } else {
+        console.error('Portfolio API error:', response.status, response.statusText);
       }
     } catch (error) {
-      console.error('Error fetching portfolio:', error);
+      console.error('Error fetching portfolio from API:', error);
     }
 
-    // Create default portfolio and save it
+    // Fallback to default portfolio (should rarely happen with Redis backend)
     const defaultPortfolio = this.createDefaultPortfolio(userId);
-    storageService.savePortfolio(userId, defaultPortfolio);
-    console.log(`📊 Created new portfolio for ${userId}`);
+    console.log(`📊 Created fallback portfolio for ${userId}`);
     
     return defaultPortfolio;
   }
@@ -48,166 +38,24 @@ class TradingService {
       });
 
       if (response.ok) {
-        return await response.json();
+        const result = await response.json();
+        console.log(`📈 Trade executed for ${userId}: ${trade.type} ${trade.shares} ${result.trade?.symbol || 'shares'}`);
+        return result;
+      } else {
+        const errorData = await response.json();
+        console.error('Trade API error:', response.status, errorData);
+        return {
+          success: false,
+          message: errorData.message || 'Trade execution failed'
+        };
       }
     } catch (error) {
-      console.error('Error executing trade:', error);
-    }
-
-    // Fallback to local execution for demo purposes
-    return this.executeTradeLocally(userId, trade, currentStocks);
-  }
-
-  private async executeTradeLocally(userId: string, trade: TradeRequest, currentStocks: SubredditStock[]): Promise<TradeResponse> {
-    const stock = currentStocks.find(s => s.id === trade.stockId);
-    if (!stock) {
+      console.error('Error executing trade via API:', error);
       return {
         success: false,
-        message: 'Stock not found'
+        message: 'Network error: Failed to execute trade'
       };
     }
-
-    const currentPortfolio = await this.getPortfolio(userId);
-    const executePrice = trade.orderType === 'market' ? stock.price : trade.limitPrice || stock.price;
-    const totalCost = executePrice * trade.shares;
-
-    if (trade.type === 'buy') {
-      if (currentPortfolio.cash < totalCost) {
-        return {
-          success: false,
-          message: 'Insufficient funds'
-        };
-      }
-
-      // Execute buy order
-      const newPortfolio = this.executeBuyOrder(currentPortfolio, stock, trade.shares, executePrice);
-      
-      // Save updated portfolio to localStorage
-      storageService.savePortfolio(userId, newPortfolio);
-      
-      return {
-        success: true,
-        message: `Successfully bought ${trade.shares} shares of ${stock.symbol}`,
-        trade: {
-          id: this.generateTradeId(),
-          stockId: stock.id,
-          symbol: stock.symbol,
-          type: 'buy',
-          shares: trade.shares,
-          price: executePrice,
-          total: totalCost,
-          timestamp: new Date().toISOString()
-        },
-        updatedPortfolio: newPortfolio
-      };
-    } else {
-      // Sell order
-      const holding = currentPortfolio.holdings.find(h => h.stockId === trade.stockId);
-      if (!holding || holding.shares < trade.shares) {
-        return {
-          success: false,
-          message: 'Insufficient shares to sell'
-        };
-      }
-
-      const newPortfolio = this.executeSellOrder(currentPortfolio, stock, trade.shares, executePrice);
-      
-      // Save updated portfolio to localStorage
-      storageService.savePortfolio(userId, newPortfolio);
-      
-      return {
-        success: true,
-        message: `Successfully sold ${trade.shares} shares of ${stock.symbol}`,
-        trade: {
-          id: this.generateTradeId(),
-          stockId: stock.id,
-          symbol: stock.symbol,
-          type: 'sell',
-          shares: trade.shares,
-          price: executePrice,
-          total: totalCost,
-          timestamp: new Date().toISOString()
-        },
-        updatedPortfolio: newPortfolio
-      };
-    }
-  }
-
-  private executeBuyOrder(portfolio: Portfolio, stock: SubredditStock, shares: number, price: number): Portfolio {
-    const totalCost = shares * price;
-    const newCash = portfolio.cash - totalCost;
-    
-    const existingHolding = portfolio.holdings.find(h => h.stockId === stock.id);
-    let newHoldings: Holding[];
-
-    if (existingHolding) {
-      // Update existing holding
-      const totalShares = existingHolding.shares + shares;
-      const newAvgPrice = ((existingHolding.avgPrice * existingHolding.shares) + totalCost) / totalShares;
-      
-      newHoldings = portfolio.holdings.map(h => 
-        h.stockId === stock.id 
-          ? {
-              ...h,
-              shares: totalShares,
-              avgPrice: newAvgPrice,
-              currentPrice: stock.price,
-              value: totalShares * stock.price,
-              unrealizedPnL: (stock.price - newAvgPrice) * totalShares,
-              unrealizedPnLPercent: ((stock.price - newAvgPrice) / newAvgPrice) * 100
-            }
-          : h
-      );
-    } else {
-      // Create new holding
-      const newHolding: Holding = {
-        stockId: stock.id,
-        symbol: stock.symbol,
-        shares,
-        avgPrice: price,
-        currentPrice: stock.price,
-        value: shares * stock.price,
-        unrealizedPnL: (stock.price - price) * shares,
-        unrealizedPnLPercent: ((stock.price - price) / price) * 100
-      };
-      newHoldings = [...portfolio.holdings, newHolding];
-    }
-
-    return this.calculatePortfolioMetrics({
-      ...portfolio,
-      cash: newCash,
-      holdings: newHoldings
-    });
-  }
-
-  private executeSellOrder(portfolio: Portfolio, stock: SubredditStock, shares: number, price: number): Portfolio {
-    const totalProceeds = shares * price;
-    const newCash = portfolio.cash + totalProceeds;
-    
-    const newHoldings = portfolio.holdings.map(holding => {
-      if (holding.stockId === stock.id) {
-        const remainingShares = holding.shares - shares;
-        if (remainingShares === 0) {
-          return null; // Will be filtered out
-        }
-        
-        return {
-          ...holding,
-          shares: remainingShares,
-          currentPrice: stock.price,
-          value: remainingShares * stock.price,
-          unrealizedPnL: (stock.price - holding.avgPrice) * remainingShares,
-          unrealizedPnLPercent: ((stock.price - holding.avgPrice) / holding.avgPrice) * 100
-        };
-      }
-      return holding;
-    }).filter(Boolean) as Holding[];
-
-    return this.calculatePortfolioMetrics({
-      ...portfolio,
-      cash: newCash,
-      holdings: newHoldings
-    });
   }
 
   updatePortfolioWithCurrentPrices(portfolio: Portfolio, currentStocks: SubredditStock[]): Portfolio {

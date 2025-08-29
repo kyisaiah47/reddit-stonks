@@ -234,8 +234,8 @@ export const App = () => {
                 <span className="text-base">
                   {view === 'dashboard' && (
                     <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z" />
-                      <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z" />
+                      <path fillRule="evenodd" d="M2 5a2 2 0 012-2h8a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm3 2h5v2H5V7zm5 4H5v2h5v-2z" clipRule="evenodd" />
+                      <path d="M15 7h1a2 2 0 012 2v5.5a1.5 1.5 0 01-3 0V9a1 1 0 00-1-1h-1v3a2 2 0 01-2 2H4.5a1.5 1.5 0 010-3H11V7z" />
                     </svg>
                   )}
                   {view === 'stocks' && (
@@ -249,7 +249,7 @@ export const App = () => {
                     </svg>
                   )}
                 </span>
-                <span className="text-xs capitalize font-medium">{view}</span>
+                <span className="text-xs capitalize font-medium">{view === 'dashboard' ? 'news' : view}</span>
               </div>
             </motion.button>
           ))}

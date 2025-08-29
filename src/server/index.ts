@@ -10,6 +10,8 @@ import { tradingEngine } from './services/tradingEngine';
 import { redditApiService } from './services/redditApiService';
 import { stockSearchService } from './services/stockSearchService';
 import { initializeWebSocketService, getWebSocketService } from './services/websocketService';
+import { userDataService } from './services/userDataService';
+import { redditNewsService } from './services/redditNewsService';
 
 // Load environment variables
 dotenv.config();
@@ -346,20 +348,30 @@ router.get<{}, PortfolioResponse | { status: string; message: string }>(
   '/api/portfolio',
   async (req, res): Promise<void> => {
     try {
-      const userId = req.query.userId as string;
-      if (!userId) {
+      // Get Reddit username from Devvit context or fallback to query param
+      let username: string | null = null;
+      try {
+        username = await reddit.getCurrentUsername();
+      } catch (error) {
+        // Fallback to userId from query if not in Devvit context
+        const userId = req.query.userId as string;
+        if (userId && userId.startsWith('reddit_')) {
+          username = userId.replace('reddit_', '');
+        } else {
+          username = userId;
+        }
+      }
+      
+      if (!username) {
         res.status(400).json({
           status: 'error',
-          message: 'userId is required'
+          message: 'Reddit username is required'
         });
         return;
       }
 
-      let portfolio = tradingEngine.getPortfolio(userId);
-      if (!portfolio) {
-        // Create new portfolio - fallback to legacy system if needed
-        portfolio = await getOrCreatePortfolio(userId);
-      }
+      // Use userDataService for Redis-based persistence
+      const portfolio = await userDataService.getPortfolio(username);
       
       res.json({ portfolio });
     } catch (error) {
@@ -379,31 +391,150 @@ router.post<{}, TradeResponse, TradeRequest & { userId: string }>(
     try {
       const { userId, ...tradeRequest } = req.body;
       
-      if (!userId) {
+      // Get Reddit username from Devvit context or extract from userId
+      let username: string | null = null;
+      try {
+        username = await reddit.getCurrentUsername();
+      } catch (error) {
+        // Fallback to extract from userId if not in Devvit context
+        if (userId && userId.startsWith('reddit_')) {
+          username = userId.replace('reddit_', '');
+        } else {
+          username = userId;
+        }
+      }
+      
+      if (!username) {
         res.status(400).json({
           success: false,
-          message: 'userId is required'
+          message: 'Reddit username is required'
         });
         return;
       }
 
-      // Execute trade through our trading engine
-      const result = await tradingEngine.submitOrder(userId, tradeRequest);
-
-      // Broadcast trade execution to WebSocket clients if successful
-      if (result.success && result.trade) {
-        const wsService = getWebSocketService();
-        if (wsService) {
-          wsService.broadcastTradeExecution(result.trade);
-          
-          // Send portfolio update to user
-          if (result.updatedPortfolio) {
-            wsService.sendPortfolioUpdate(userId, result.updatedPortfolio);
-          }
-        }
+      // Get current portfolio
+      const portfolio = await userDataService.getPortfolio(username);
+      
+      // Validate trade
+      const stock = marketDataService.getStock(tradeRequest.stockId);
+      if (!stock) {
+        res.status(404).json({
+          success: false,
+          message: 'Stock not found'
+        });
+        return;
       }
 
-      res.json(result);
+      const totalCost = tradeRequest.shares * stock.price;
+      
+      if (tradeRequest.type === 'buy') {
+        if (portfolio.cash < totalCost) {
+          res.status(400).json({
+            success: false,
+            message: 'Insufficient funds'
+          });
+          return;
+        }
+        
+        // Execute buy order
+        portfolio.cash -= totalCost;
+        
+        // Add or update holding
+        const existingHolding = portfolio.holdings.find(h => h.stockId === tradeRequest.stockId);
+        if (existingHolding) {
+          existingHolding.shares += tradeRequest.shares;
+          existingHolding.averagePrice = (existingHolding.averagePrice * (existingHolding.shares - tradeRequest.shares) + totalCost) / existingHolding.shares;
+        } else {
+          portfolio.holdings.push({
+            stockId: tradeRequest.stockId,
+            symbol: stock.symbol,
+            shares: tradeRequest.shares,
+            averagePrice: stock.price,
+            currentValue: totalCost,
+            totalReturn: 0,
+            totalReturnPercent: 0
+          });
+        }
+      } else {
+        // Execute sell order
+        const holding = portfolio.holdings.find(h => h.stockId === tradeRequest.stockId);
+        if (!holding || holding.shares < tradeRequest.shares) {
+          res.status(400).json({
+            success: false,
+            message: 'Insufficient shares to sell'
+          });
+          return;
+        }
+        
+        portfolio.cash += totalCost;
+        holding.shares -= tradeRequest.shares;
+        
+        // Remove holding if all shares sold
+        if (holding.shares === 0) {
+          portfolio.holdings = portfolio.holdings.filter(h => h.stockId !== tradeRequest.stockId);
+        }
+      }
+      
+      // Recalculate portfolio totals
+      let holdingsValue = 0;
+      for (const holding of portfolio.holdings) {
+        const currentStock = marketDataService.getStock(holding.stockId);
+        if (currentStock) {
+          holding.currentValue = holding.shares * currentStock.price;
+          holding.totalReturn = holding.currentValue - (holding.shares * holding.averagePrice);
+          holding.totalReturnPercent = ((currentStock.price - holding.averagePrice) / holding.averagePrice) * 100;
+          holdingsValue += holding.currentValue;
+        }
+      }
+      
+      portfolio.totalValue = portfolio.cash + holdingsValue;
+      const initialValue = 10000; // Starting cash
+      portfolio.totalReturn = portfolio.totalValue - initialValue;
+      portfolio.totalReturnPercent = ((portfolio.totalValue - initialValue) / initialValue) * 100;
+      
+      // Save updated portfolio
+      await userDataService.savePortfolio(username, portfolio);
+      
+      // Save trade history
+      const trade = {
+        id: `trade_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        stockId: tradeRequest.stockId,
+        symbol: stock.symbol,
+        type: tradeRequest.type,
+        shares: tradeRequest.shares,
+        price: stock.price,
+        total: totalCost,
+        timestamp: new Date().toISOString()
+      };
+      
+      await userDataService.saveTradeHistory(username, trade);
+      
+      // Update user stats
+      await userDataService.updateUserStats(username, {
+        totalTrades: 1, // This would be incremented
+        totalVolume: totalCost
+      });
+      
+      // Update leaderboard
+      await userDataService.updateLeaderboard(username, portfolio.totalValue, portfolio.totalReturnPercent);
+
+      // Broadcast trade execution to WebSocket clients
+      const wsService = getWebSocketService();
+      if (wsService) {
+        wsService.broadcastTradeExecution({
+          ...trade,
+          userId: username
+        });
+        
+        // Send portfolio update to user
+        wsService.sendPortfolioUpdate(username, portfolio);
+      }
+
+      res.json({
+        success: true,
+        trade,
+        updatedPortfolio: portfolio
+      });
     } catch (error) {
       console.error('Trade error:', error);
       res.status(500).json({
@@ -563,16 +694,185 @@ router.post<{}, any, {
 // Get leaderboard
 router.get<{}, LeaderboardResponse | { status: string; message: string }>(
   '/api/leaderboard',
-  async (_req, res): Promise<void> => {
+  async (req, res): Promise<void> => {
     try {
-      // For now use the legacy system, could be enhanced to use trading engine data
-      const leaderboard = await getLeaderboard();
-      res.json(leaderboard);
+      const type = (req.query.type as 'value' | 'return') || 'value';
+      const limit = parseInt(req.query.limit as string) || 10;
+      
+      // Use userDataService for Redis-based leaderboard
+      const leaderboard = await userDataService.getLeaderboard(type, limit);
+      
+      res.json({ 
+        leaderboard,
+        type,
+        lastUpdated: new Date().toISOString()
+      });
     } catch (error) {
       console.error('Leaderboard error:', error);
       res.status(500).json({
         status: 'error',
         message: 'Failed to fetch leaderboard'
+      });
+    }
+  }
+);
+
+// Get user trade history
+router.get<{}, any | { status: string; message: string }>(
+  '/api/trade-history',
+  async (req, res): Promise<void> => {
+    try {
+      // Get Reddit username from Devvit context or query param
+      let username: string | null = null;
+      try {
+        username = await reddit.getCurrentUsername();
+      } catch (error) {
+        // Fallback to userId from query if not in Devvit context
+        const userId = req.query.userId as string;
+        if (userId && userId.startsWith('reddit_')) {
+          username = userId.replace('reddit_', '');
+        } else {
+          username = userId;
+        }
+      }
+      
+      if (!username) {
+        res.status(400).json({
+          status: 'error',
+          message: 'Reddit username is required'
+        });
+        return;
+      }
+
+      const limit = parseInt(req.query.limit as string) || 20;
+      const trades = await userDataService.getTradeHistory(username, limit);
+      
+      res.json({ 
+        trades,
+        username,
+        count: trades.length
+      });
+    } catch (error) {
+      console.error('Trade history error:', error);
+      res.status(500).json({
+        status: 'error',
+        message: 'Failed to fetch trade history'
+      });
+    }
+  }
+);
+
+// Get user stats
+router.get<{}, any | { status: string; message: string }>(
+  '/api/user-stats',
+  async (req, res): Promise<void> => {
+    try {
+      // Get Reddit username from Devvit context or query param
+      let username: string | null = null;
+      try {
+        username = await reddit.getCurrentUsername();
+      } catch (error) {
+        // Fallback to userId from query if not in Devvit context
+        const userId = req.query.userId as string;
+        if (userId && userId.startsWith('reddit_')) {
+          username = userId.replace('reddit_', '');
+        } else {
+          username = userId;
+        }
+      }
+      
+      if (!username) {
+        res.status(400).json({
+          status: 'error',
+          message: 'Reddit username is required'
+        });
+        return;
+      }
+
+      const stats = await userDataService.getUserStats(username);
+      
+      res.json({ 
+        stats,
+        username
+      });
+    } catch (error) {
+      console.error('User stats error:', error);
+      res.status(500).json({
+        status: 'error',
+        message: 'Failed to fetch user stats'
+      });
+    }
+  }
+);
+
+// Get Reddit financial news
+router.get<{}, any | { status: string; message: string }>(
+  '/api/news',
+  async (req, res): Promise<void> => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 20;
+      const news = await redditNewsService.getFinancialNews(limit);
+      
+      res.json(news);
+    } catch (error) {
+      console.error('Reddit news error:', error);
+      res.status(500).json({
+        status: 'error',
+        message: 'Failed to fetch Reddit financial news'
+      });
+    }
+  }
+);
+
+// Get trending topics from Reddit
+router.get<{}, any | { status: string; message: string }>(
+  '/api/news/trending',
+  async (req, res): Promise<void> => {
+    try {
+      const topics = await redditNewsService.getTrendingTopics();
+      
+      res.json({ 
+        topics,
+        lastUpdated: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Trending topics error:', error);
+      res.status(500).json({
+        status: 'error',
+        message: 'Failed to fetch trending topics'
+      });
+    }
+  }
+);
+
+// Get stock-specific Reddit news
+router.get<{}, any | { status: string; message: string }>(
+  '/api/news/stocks',
+  async (req, res): Promise<void> => {
+    try {
+      const symbols = (req.query.symbols as string)?.split(',') || [];
+      const limit = parseInt(req.query.limit as string) || 10;
+      
+      if (symbols.length === 0) {
+        res.status(400).json({
+          status: 'error',
+          message: 'Stock symbols are required'
+        });
+        return;
+      }
+      
+      const stockNews = await redditNewsService.getStockNews(symbols, limit);
+      
+      res.json({ 
+        posts: stockNews,
+        symbols,
+        count: stockNews.length
+      });
+    } catch (error) {
+      console.error('Stock news error:', error);
+      res.status(500).json({
+        status: 'error',
+        message: 'Failed to fetch stock-specific news'
       });
     }
   }
