@@ -27,7 +27,7 @@ export type SubredditStock = {
   volume: number;
   marketCap: number;
   subscribers: number;
-  dailyActiveUsers?: number;
+  dailyActiveUsers?: number | undefined;
 };
 
 export type Portfolio = {
