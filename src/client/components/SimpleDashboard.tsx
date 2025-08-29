@@ -89,7 +89,7 @@ export const SimpleDashboard = ({ portfolio, marketData, onStockClick }: SimpleD
                   className="text-5xl font-black text-white block"
                   format="currency"
                 />
-                <span className="text-gray-400 text-sm">Total Portfolio Value</span>
+                <div className="text-gray-400 text-sm">Total Portfolio Value</div>
               </div>
 
               {/* Return - Secondary Focus */}

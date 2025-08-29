@@ -45,7 +45,7 @@ export const StreamlinedPortfolio = ({ portfolio, onStockClick }: StreamlinedPor
               className="text-4xl font-black text-white block"
               format="currency"
             />
-            <span className="text-gray-400 text-sm">Total Value</span>
+            <div className="text-gray-400 text-sm">Total Value</div>
           </div>
 
           <div className="grid grid-cols-3 gap-4 text-center">
@@ -55,7 +55,7 @@ export const StreamlinedPortfolio = ({ portfolio, onStockClick }: StreamlinedPor
                 className="text-lg font-bold text-white block"
                 format="currency"
               />
-              <span className="text-xs text-gray-400">Cash</span>
+              <div className="text-xs text-gray-400">Cash</div>
             </div>
             <div>
               <AnimatedPrice
@@ -65,7 +65,7 @@ export const StreamlinedPortfolio = ({ portfolio, onStockClick }: StreamlinedPor
                 }`}
                 format="currency"
               />
-              <span className="text-xs text-gray-400">Return</span>
+              <div className="text-xs text-gray-400">Return</div>
             </div>
             <div>
               <AnimatedPrice
@@ -77,7 +77,7 @@ export const StreamlinedPortfolio = ({ portfolio, onStockClick }: StreamlinedPor
                 }`}
                 format="none"
               />
-              <span className="text-xs text-gray-400">Return %</span>
+              <div className="text-xs text-gray-400">Return %</div>
             </div>
           </div>
         </motion.div>
