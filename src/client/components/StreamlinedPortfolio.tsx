@@ -10,7 +10,7 @@ interface StreamlinedPortfolioProps {
 export const StreamlinedPortfolio = ({ portfolio, onStockClick }: StreamlinedPortfolioProps) => {
   if (!portfolio) {
     return (
-      <div className="h-full bg-gray-900 text-white flex items-center justify-center">
+      <div className="w-full bg-gray-900 text-white py-20 flex items-center justify-center">
         <div className="text-center">
           <div className="text-6xl mb-4">💼</div>
           <div className="text-2xl font-bold mb-2">No Portfolio Yet</div>
@@ -25,7 +25,7 @@ export const StreamlinedPortfolio = ({ portfolio, onStockClick }: StreamlinedPor
     .sort((a, b) => b.value - a.value);
 
   return (
-    <div className="h-full bg-gray-900 text-white flex flex-col overflow-hidden">
+    <div className="w-full bg-gray-900 text-white">
       {/* Header */}
       <div className="bg-gray-800 px-4 py-4 flex-shrink-0">
         <h1 className="text-xl font-bold text-center">Your Portfolio</h1>
@@ -78,8 +78,8 @@ export const StreamlinedPortfolio = ({ portfolio, onStockClick }: StreamlinedPor
         </motion.div>
       </div>
 
-      {/* Holdings List - Scrollable */}
-      <div className="flex-1 px-4 pb-4 min-h-0 overflow-y-auto">
+      {/* Holdings List */}
+      <div className="px-4 pb-4">
         <h3 className="text-lg font-bold mb-3 text-gray-300">
           Your Holdings {portfolio.holdings.length > 0 && `(${portfolio.holdings.length})`}
         </h3>
@@ -133,7 +133,7 @@ export const StreamlinedPortfolio = ({ portfolio, onStockClick }: StreamlinedPor
           </div>
         ) : (
           <motion.div
-            className="h-full flex items-center justify-center"
+            className="py-20 flex items-center justify-center"
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
           >

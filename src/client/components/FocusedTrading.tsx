@@ -194,7 +194,7 @@ export const FocusedTrading = ({ selectedStock, portfolio, onTrade, onBack }: Fo
         ) : (
           // Confirmation Screen
           <motion.div
-            className="h-full flex flex-col justify-center gap-6"
+            className="flex flex-col justify-center gap-6"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
           >
