@@ -61,7 +61,7 @@ const MEME_MESSAGES = {
   ]
 };
 
-const MemeMessage = ({ message, type, onClose, duration = 3000 }: MemeMessageProps) => {
+const MemeMessage = ({ message, type, onClose, duration = 2000 }: MemeMessageProps) => {
   const [isVisible, setIsVisible] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
 
@@ -69,10 +69,10 @@ const MemeMessage = ({ message, type, onClose, duration = 3000 }: MemeMessagePro
     // Entrance animation
     const enterTimer = setTimeout(() => setIsVisible(true), 50);
     
-    // Auto-dismiss
+    // Auto-dismiss (shorter duration)
     const exitTimer = setTimeout(() => {
       setIsExiting(true);
-      setTimeout(() => onClose(), 300);
+      setTimeout(() => onClose(), 200);
     }, duration);
 
     return () => {
@@ -85,31 +85,31 @@ const MemeMessage = ({ message, type, onClose, duration = 3000 }: MemeMessagePro
     switch (type) {
       case 'success':
         return {
-          bg: 'bg-green-900',
-          border: 'border-green-500',
-          text: 'text-green-400',
-          shadow: 'shadow-green-500/50'
+          bg: 'bg-green-900/80',
+          border: 'border-green-500/50',
+          text: 'text-green-300',
+          shadow: 'shadow-lg shadow-green-500/20'
         };
       case 'error':
         return {
-          bg: 'bg-red-900',
-          border: 'border-red-500', 
-          text: 'text-red-400',
-          shadow: 'shadow-red-500/50'
+          bg: 'bg-red-900/80',
+          border: 'border-red-500/50', 
+          text: 'text-red-300',
+          shadow: 'shadow-lg shadow-red-500/20'
         };
       case 'warning':
         return {
-          bg: 'bg-yellow-900',
-          border: 'border-yellow-500',
-          text: 'text-yellow-400',
-          shadow: 'shadow-yellow-500/50'
+          bg: 'bg-yellow-900/80',
+          border: 'border-yellow-500/50',
+          text: 'text-yellow-300',
+          shadow: 'shadow-lg shadow-yellow-500/20'
         };
       case 'info':
         return {
-          bg: 'bg-orange-900',
-          border: 'border-orange-500',
-          text: 'text-orange-400', 
-          shadow: 'shadow-orange-500/50'
+          bg: 'bg-orange-900/80',
+          border: 'border-orange-500/50',
+          text: 'text-orange-300', 
+          shadow: 'shadow-lg shadow-orange-500/20'
         };
     }
   };
@@ -118,42 +118,44 @@ const MemeMessage = ({ message, type, onClose, duration = 3000 }: MemeMessagePro
 
   return (
     <div
-      className={`${styles.bg} ${styles.border} border-2 rounded-lg p-4 shadow-lg ${styles.shadow} transform transition-all duration-300 ${
-        isVisible && !isExiting ? 'translate-x-0 opacity-100 scale-100' : 'translate-x-full opacity-0 scale-95'
+      className={`${styles.bg} ${styles.border} border rounded-lg px-3 py-2 ${styles.shadow} transform transition-all duration-200 ${
+        isVisible && !isExiting ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-4 opacity-0 scale-95'
       }`}
       onClick={() => {
         setIsExiting(true);
-        setTimeout(() => onClose(), 300);
+        setTimeout(() => onClose(), 200);
       }}
     >
-      <div className={`${styles.text} font-bold text-center cursor-pointer hover:scale-105 transition-transform`}>
+      <div className={`${styles.text} font-medium text-sm text-center cursor-pointer hover:scale-105 transition-transform`}>
         {message}
       </div>
       
-      {/* Animated sparkles */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-lg">
-        {type === 'success' && [...Array(6)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute text-yellow-400 animate-ping"
-            style={{
-              left: `${10 + (i * 15)}%`,
-              top: `${20 + (i % 2) * 40}%`,
-              animationDelay: `${i * 200}ms`,
-              animationDuration: '1.5s'
-            }}
-          >
-            ✨
-          </div>
-        ))}
-      </div>
+      {/* Subtle sparkles only for success */}
+      {type === 'success' && (
+        <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-lg">
+          {[...Array(3)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute text-green-400/60 animate-pulse text-xs"
+              style={{
+                left: `${20 + (i * 30)}%`,
+                top: `${30 + (i % 2) * 20}%`,
+                animationDelay: `${i * 400}ms`,
+                animationDuration: '2s'
+              }}
+            >
+              ✨
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
 
 export const MemeMessages = ({ messages, onDismiss }: MemeMessagesProps) => {
   return (
-    <div className="fixed top-20 right-4 z-50 space-y-2 max-w-sm">
+    <div className="fixed bottom-24 left-1/2 transform -translate-x-1/2 z-50 space-y-2 max-w-xs">
       {messages.map((msg) => (
         <MemeMessage
           key={msg.id}

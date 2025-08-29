@@ -18,6 +18,15 @@ export const SimpleStocks = ({ stocks, portfolio, onTrade }: SimpleStocksProps) 
   const [sortBy, setSortBy] = useState<'change' | 'price' | 'volume' | 'name'>('change');
   const [showSearch, setShowSearch] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  
+  // Quantity selection modal
+  const [showQuantityModal, setShowQuantityModal] = useState(false);
+  const [pendingTrade, setPendingTrade] = useState<{
+    stockId: string;
+    direction: 'left' | 'right';
+    stock: SubredditStock;
+  } | null>(null);
+  const [quantity, setQuantity] = useState(1);
 
   const categories: Array<{ key: StockCategory | null; label: string; icon: string }> = [
     { key: null, label: 'All', icon: '🌟' },
@@ -69,21 +78,38 @@ export const SimpleStocks = ({ stocks, portfolio, onTrade }: SimpleStocksProps) 
     const stock = stocks.find(s => s.id === stockId);
     if (!stock) return;
 
-    // Calculate default shares (1 for now, could be smarter)
-    const shares = 1;
+    // Open quantity selection modal
+    setPendingTrade({ stockId, direction, stock });
+    setQuantity(1);
+    setShowQuantityModal(true);
+  };
+
+  const executeTrade = () => {
+    if (!pendingTrade) return;
+    
+    const { stockId, direction } = pendingTrade;
     
     if (direction === 'right') {
       // Buy
-      if (portfolio && portfolio.cash >= stock.price * shares) {
-        onTrade(stockId, 'buy', shares);
+      if (portfolio && portfolio.cash >= pendingTrade.stock.price * quantity) {
+        onTrade(stockId, 'buy', quantity);
       }
     } else {
       // Sell
       const holding = portfolio?.holdings.find(h => h.stockId === stockId);
-      if (holding && holding.shares >= shares) {
-        onTrade(stockId, 'sell', shares);
+      if (holding && holding.shares >= quantity) {
+        onTrade(stockId, 'sell', quantity);
       }
     }
+    
+    // Close modal
+    setShowQuantityModal(false);
+    setPendingTrade(null);
+  };
+
+  const cancelTrade = () => {
+    setShowQuantityModal(false);
+    setPendingTrade(null);
   };
 
   return (
@@ -399,6 +425,104 @@ export const SimpleStocks = ({ stocks, portfolio, onTrade }: SimpleStocksProps) 
           </div>
         </AnimatePresence>
       </div>
+
+      {/* Quantity Selection Modal */}
+      <AnimatePresence>
+        {showQuantityModal && pendingTrade && (
+          <motion.div 
+            className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div 
+              className={`bg-gray-800 rounded-xl p-4 mx-4 max-w-xs w-full border ${
+                pendingTrade.direction === 'right' 
+                  ? 'border-green-500/50 shadow-lg shadow-green-500/20' 
+                  : 'border-orange-500/50 shadow-lg shadow-orange-500/20'
+              }`}
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              {/* Header */}
+              <div className="text-center mb-3">
+                <h3 className="text-base font-bold">
+                  {pendingTrade.direction === 'right' ? '💰 Buy' : '💸 Sell'} {pendingTrade.stock.symbol}
+                </h3>
+              </div>
+
+              {/* Quantity Selector */}
+              <div className="mb-3">
+                <div className="flex items-center justify-center gap-3">
+                  <button
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    className="w-8 h-8 rounded-full bg-gray-700 text-white font-bold hover:bg-gray-600 transition-colors"
+                  >
+                    -
+                  </button>
+                  <input
+                    type="number"
+                    value={quantity}
+                    onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                    className="w-16 text-center text-lg font-bold bg-gray-700 border border-gray-600 rounded-lg py-1 text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    min="1"
+                  />
+                  <button
+                    onClick={() => setQuantity(quantity + 1)}
+                    className="w-8 h-8 rounded-full bg-gray-700 text-white font-bold hover:bg-gray-600 transition-colors"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+
+              {/* Trade Details */}
+              <div className="bg-gray-700/50 rounded-lg p-2 mb-3">
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="text-gray-400">Price:</span>
+                  <span className="text-white">{pendingTrade.stock.price.toFixed(2)} Ⓒ</span>
+                </div>
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="text-gray-400">Qty:</span>
+                  <span className="text-white">{quantity}</span>
+                </div>
+                <div className="flex justify-between text-sm font-bold pt-1 border-t border-gray-600">
+                  <span>Total:</span>
+                  <span className={pendingTrade.direction === 'right' ? 'text-green-400' : 'text-orange-400'}>
+                    {(pendingTrade.stock.price * quantity).toFixed(2)} Ⓒ
+                  </span>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-2">
+                <motion.button
+                  onClick={cancelTrade}
+                  className="flex-1 py-2 bg-gray-600 text-white text-sm font-medium rounded-lg hover:bg-gray-500 transition-colors"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  Cancel
+                </motion.button>
+                <motion.button
+                  onClick={executeTrade}
+                  className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors ${
+                    pendingTrade.direction === 'right'
+                      ? 'bg-green-600 hover:bg-green-500 text-white'
+                      : 'bg-orange-600 hover:bg-orange-500 text-white'
+                  }`}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  {pendingTrade.direction === 'right' ? 'Buy' : 'Sell'}
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
