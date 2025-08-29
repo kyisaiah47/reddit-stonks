@@ -1,21 +1,40 @@
 import { Portfolio, Holding, TradeRequest, TradeResponse, SubredditStock } from '../../shared/types/api';
+import { storageService } from './storageService';
 
 class TradingService {
   private readonly STARTING_CASH = 10000;
 
   async getPortfolio(userId: string): Promise<Portfolio> {
+    // First try to get from localStorage (faster)
+    const storedPortfolio = storageService.getPortfolio(userId);
+    if (storedPortfolio) {
+      console.log(`📊 Loaded portfolio for ${userId} from localStorage`);
+      return storedPortfolio;
+    }
+
+    // Fallback to API call
     try {
       const response = await fetch(`/api/portfolio?userId=${userId}`);
       if (response.ok) {
         const data = await response.json();
-        return data.portfolio;
+        const portfolio = data.portfolio;
+        
+        // Save to localStorage for next time
+        storageService.savePortfolio(userId, portfolio);
+        console.log(`📊 Loaded portfolio for ${userId} from API and cached`);
+        
+        return portfolio;
       }
     } catch (error) {
       console.error('Error fetching portfolio:', error);
     }
 
-    // Return default portfolio if fetch fails
-    return this.createDefaultPortfolio(userId);
+    // Create default portfolio and save it
+    const defaultPortfolio = this.createDefaultPortfolio(userId);
+    storageService.savePortfolio(userId, defaultPortfolio);
+    console.log(`📊 Created new portfolio for ${userId}`);
+    
+    return defaultPortfolio;
   }
 
   async executeTrade(userId: string, trade: TradeRequest, currentStocks: SubredditStock[]): Promise<TradeResponse> {
@@ -63,6 +82,9 @@ class TradingService {
       // Execute buy order
       const newPortfolio = this.executeBuyOrder(currentPortfolio, stock, trade.shares, executePrice);
       
+      // Save updated portfolio to localStorage
+      storageService.savePortfolio(userId, newPortfolio);
+      
       return {
         success: true,
         message: `Successfully bought ${trade.shares} shares of ${stock.symbol}`,
@@ -89,6 +111,9 @@ class TradingService {
       }
 
       const newPortfolio = this.executeSellOrder(currentPortfolio, stock, trade.shares, executePrice);
+      
+      // Save updated portfolio to localStorage
+      storageService.savePortfolio(userId, newPortfolio);
       
       return {
         success: true,

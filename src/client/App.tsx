@@ -10,6 +10,7 @@ import { useCounter } from './hooks/useCounter';
 import { MemeMessages, useMemeMessages } from './components/MemeMessages';
 import { RedditTradingLogo } from './components/RedditTradingLogo';
 import { SubredditStock } from '../shared/types/api';
+import { storageService } from './services/storageService';
 
 type View = 'dashboard' | 'stocks' | 'trading' | 'portfolio';
 
@@ -45,6 +46,9 @@ export const App = () => {
   // Get user data from the existing hook
   const { username } = useCounter();
   
+  // Create Reddit-specific user ID for localStorage
+  const userId = username ? storageService.getRedditUserId(username) : 'anonymous';
+  
   // Market data hook
   const { marketData, loading: marketLoading, error: marketError, refreshData } = useMarketData();
   
@@ -53,7 +57,7 @@ export const App = () => {
     portfolio, 
     loading: portfolioLoading, 
     refreshPortfolio 
-  } = usePortfolio(username || 'anonymous', marketData?.stocks || []);
+  } = usePortfolio(userId, marketData?.stocks || []);
 
   // Meme messages hook
   const { messages, addMemeMessage, dismissMessage } = useMemeMessages();
