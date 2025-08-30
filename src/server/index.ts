@@ -3,6 +3,13 @@ import { Devvit } from '@devvit/public-api';
 // NO EXPRESS SERVER - using Devvit's built-in system
 console.log('🔑 Reddit API status: Connected via Devvit');
 console.log('✅ Server ready - using Devvit platform services');
+console.log('🔍 DEBUG: Server initialization complete - ready to test Reddit API');
+
+// Test Reddit API on server startup
+(async () => {
+  console.log('🔍 DEBUG: Testing Reddit API during server init...');
+  // Note: This won't work because we don't have context here, but it shows the approach
+})();
 
 // Popular subreddits for stock simulation (from API.md Phase 1)
 const STOCK_SUBREDDITS = [
@@ -12,44 +19,24 @@ const STOCK_SUBREDDITS = [
   'PersonalFinanceCanada', 'UKPersonalFinance', 'AusFinance', 'IndiaInvestments', 'SecurityAnalysis'
 ];
 
-// Test Reddit API on startup with multiple endpoints
+// Test Reddit API immediately on app install
 Devvit.addTrigger({
   event: 'AppInstall',
-  onEvent: async (event, context) => {
+  onEvent: async (_event, context) => {
+    console.log('🧪 Reddit API test starting in AppInstall trigger...');
+    
     try {
-      console.log('🧪 Testing Reddit API endpoints on app install...');
+      console.log('🔍 DEBUG: Calling getSubredditInfoByName("wallstreetbets")');
+      const subreddit = await context.reddit.getSubredditInfoByName('wallstreetbets');
       
-      // Test getSubredditInfoByName (core endpoint for stock prices)
-      console.log('📊 Testing getSubredditInfoByName...');
-      const wsb = await context.reddit.getSubredditInfoByName('wallstreetbets');
-      console.log(`✅ WSB: ${wsb.subscribers} subscribers`);
-      
-      // Test getHotPosts (for engagement metrics)
-      console.log('📈 Testing getHotPosts...');
-      const hotPosts = await context.reddit.getHotPosts({
-        subredditName: 'wallstreetbets',
-        limit: 5
-      });
-      console.log(`✅ Hot posts: ${hotPosts.length} posts fetched`);
-      
-      // Test getNewPosts (for daily activity)  
-      console.log('🆕 Testing getNewPosts...');
-      const newPosts = await context.reddit.getNewPosts({
-        subredditName: 'wallstreetbets', 
-        limit: 5
-      });
-      console.log(`✅ New posts: ${newPosts.length} posts fetched`);
-      
-      // Test getCurrentUser (for portfolio management)
-      console.log('👤 Testing getCurrentUser...');
-      const currentUser = await context.reddit.getCurrentUser();
-      console.log(`✅ Current user: ${currentUser?.username || 'Anonymous'}`);
-      
-      console.log('🎉 All Reddit API tests successful!');
+      console.log('🔍 DEBUG: ✅ Reddit API SUCCESS in AppInstall!');
+      console.log('🔍 DEBUG: Subreddit data:', JSON.stringify(subreddit, null, 2));
+      console.log('🎉 Reddit API working perfectly!');
       
     } catch (error) {
-      console.error('❌ Reddit API test failed:', error);
-      console.error('Error details:', JSON.stringify(error, null, 2));
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      console.error('❌ Reddit API FAILED in AppInstall:', errorMsg);
+      console.error('❌ Full error:', error);
     }
   }
 });
@@ -92,36 +79,64 @@ Devvit.addTrigger({
   }
 });
 
-// Add a custom post that provides Reddit data to the client
+// Add a custom post that tests Reddit API every time it renders
 Devvit.addCustomPostType({
   name: 'StonksApp', 
   render: async (context) => {
-    // Instead of JSX, let's just fetch the data when the post loads
-    console.log('🎯 StonksApp post loading...');
+    console.log('🎯 StonksApp custom post rendering...');
+    
+    // Test Reddit API immediately
+    console.log('🔍 DEBUG: Testing Reddit API in custom post render');
+    let apiResult = 'Testing...';
     
     try {
-      // Fetch real Reddit data for first 3 subreddits
-      console.log('📊 Fetching Reddit market data...');
-      for (const subredditName of STOCK_SUBREDDITS.slice(0, 3)) {
-        try {
-          const subreddit = await context.reddit.getSubredditInfoByName(subredditName);
-          const hotPosts = await context.reddit.getHotPosts({
-            subredditName,
-            limit: 10
-          });
-          
-          console.log(`📈 ${subreddit.name}: ${subreddit.subscribers} subs, ${hotPosts.length} hot posts`);
-        } catch (err) {
-          console.log(`⚠️ Failed to fetch ${subredditName}: ${err}`);
-        }
-      }
+      const subreddit = await context.reddit.getSubredditInfoByName('wallstreetbets');
+      console.log('🔍 DEBUG: ✅ Reddit API SUCCESS!');
+      console.log('🔍 DEBUG: Full subreddit object:', JSON.stringify(subreddit, null, 2));
+      console.log('🔍 DEBUG: WSB name:', subreddit.name);
+      apiResult = `SUCCESS: Got subreddit data for ${subreddit.name}`;
+      
+      // Test another endpoint
+      const hotPosts = await context.reddit.getHotPosts({
+        subredditName: 'wallstreetbets',
+        limit: 3
+      });
+      console.log('🔍 DEBUG: ✅ Hot posts API SUCCESS!');
+      console.log('🔍 DEBUG: Hot posts object:', JSON.stringify(hotPosts, null, 2));
+      
     } catch (error) {
-      console.error('❌ Failed to fetch market data:', error);
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      console.error('❌ Reddit API FAILED in custom post:', errorMsg);
+      apiResult = `FAILED: ${errorMsg}`;
     }
     
-    // Return a simple text component - no JSX needed
-    return { type: 'text', text: 'Reddit Stonks - Market Data Loaded' };
+    console.log('🔍 DEBUG: Custom post render complete');
+    
+    // Return result as text
+    return {
+      type: 'text',
+      text: `Reddit API Test Result: ${apiResult}`
+    };
   }
 });
+
+// Simple Reddit API test in AppUpgrade trigger
+Devvit.addTrigger({
+  event: 'AppUpgrade',
+  onEvent: async (_event, context) => {
+    console.log('🔍 DEBUG: AppUpgrade trigger - testing Reddit API');
+    
+    try {
+      const subreddit = await context.reddit.getSubredditInfoByName('wallstreetbets');
+      console.log('🔍 DEBUG: Reddit API SUCCESS in AppUpgrade!');
+      console.log('🔍 DEBUG: WSB name:', subreddit.name);
+      console.log('✅ Reddit API working in trigger');
+    } catch (error) {
+      console.error('❌ Reddit API FAILED in trigger:', error instanceof Error ? error.message : 'Unknown error');
+    }
+  }
+});
+
+// Remove menu item to avoid context menu errors - test directly in custom post
 
 export default Devvit;

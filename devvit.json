@@ -37,19 +37,9 @@
   },
   "media": {},
   "menu": {
-    "items": [
-      {
-        "label": "Create a new post",
-        "description": "stonks-exchange",
-        "location": "subreddit",
-        "forUserType": "moderator",
-        "endpoint": "/internal/menu/post-create"
-      }
-    ]
+    "items": []
   },
-  "triggers": {
-    "onAppInstall": "/internal/on-app-install"
-  },
+  "triggers": {},
   "dev": {
     "subreddit": "reddit_stonks_dev"
   }
