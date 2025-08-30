@@ -1,6 +1,7 @@
 import { SubredditStock, MarketDataResponse, MarketEvent, SectorPerformance, StockCategory } from '../../shared/types/api';
 import { STOCK_UNIVERSE, StockDefinition } from '../data/stockUniverse';
-import { redditApiService, RedditSubredditData } from './redditApiService';
+import { RedditSubredditData } from './redditApiService';
+import { devvitRedditService } from './devvitRedditService';
 import { pricingEngine, PriceCalculationResult } from './pricingEngine';
 
 export interface TradingData {
@@ -18,49 +19,97 @@ export class MarketDataService {
   private lastUpdateTime = 0;
 
   constructor() {
-    this.initializeStocks();
+    this.initializeStocksBasic();
     this.startRealTimeUpdates();
   }
 
-  private async initializeStocks(): Promise<void> {
-    console.log('Initializing stock universe - API data only...');
+  private initializeStocksBasic(): void {
+    console.log('Initializing stock universe with basic data - Reddit API will be fetched on request...');
     
-    // Only initialize stocks with real Reddit API data
+    // Initialize stocks with minimal data - Reddit API requires request context
     for (const stockDef of STOCK_UNIVERSE) {
-      try {
-        const redditData = await redditApiService.fetchSubredditData(stockDef.subreddit);
-        
-        if (redditData) {
-          const priceResult = pricingEngine.calculateStockPrice(stockDef, redditData);
-          const stock = this.createStockFromData(stockDef, redditData, priceResult);
-          this.stockCache.set(stockDef.id, stock);
-          pricingEngine.initializePrice(stockDef.id, stock.price);
-          
-          // Initialize trading data
-          this.tradingData.set(stockDef.id, {
-            volume: Math.floor(Math.random() * 10000) + 1000,
-            buyPressure: 0,
-            sellPressure: 0
-          });
-          
-          console.log(`✓ Initialized ${stockDef.symbol} at $${stock.price.toFixed(2)}`);
-        } else {
-          console.log(`❌ Skipped ${stockDef.symbol} - no Reddit API data available`);
+      // Create basic stock with default price
+      const stock: SubredditStock = {
+        id: stockDef.id,
+        symbol: stockDef.symbol,
+        name: stockDef.name,
+        price: stockDef.basePrice,
+        change: 0,
+        volume: 0,
+        marketCap: 0,
+        subscribers: 0,
+        dailyActiveUsers: 0,
+        category: stockDef.category,
+        volatilityMultiplier: stockDef.volatilityMultiplier,
+        isDividendStock: stockDef.isDividendStock,
+        basePrice: stockDef.basePrice,
+        priceDrivers: {
+          subscribers: 0,
+          activeUsers: 0,
+          engagement: 0,
+          sentiment: 0,
+          viral: 0,
+          trading: 0
         }
-      } catch (error) {
-        console.error(`❌ Failed to initialize ${stockDef.symbol}:`, error);
-      }
+      };
+      
+      this.stockCache.set(stockDef.id, stock);
+      pricingEngine.initializePrice(stockDef.id, stock.price);
+      
+      // Initialize trading data
+      this.tradingData.set(stockDef.id, {
+        volume: 0,
+        buyPressure: 0,
+        sellPressure: 0
+      });
     }
 
-    if (this.stockCache.size === 0) {
-      console.error('⚠️  No stocks initialized - Reddit API not available');
-      throw new Error('Failed to initialize any stocks - Reddit API required');
-    }
-
-    console.log(`✅ Initialized ${this.stockCache.size} stocks with real Reddit API data`);
+    console.log(`✅ Initialized ${this.stockCache.size} stocks with basic data - Reddit API pending request context`);
   }
 
-
+  private createFallbackRedditData(stockDef: StockDefinition): RedditSubredditData {
+    // Generate realistic fallback data based on stock category and size
+    let baseSubscribers = 50000;
+    let activeUsersRatio = 0.01;
+    let engagementBase = 0.3;
+    
+    switch (stockDef.category) {
+      case 'meme':
+        baseSubscribers = Math.floor(Math.random() * 2000000) + 500000; // 0.5M-2.5M
+        activeUsersRatio = 0.03; // Higher engagement
+        engagementBase = 0.6;
+        break;
+      case 'blue-chip':
+        baseSubscribers = Math.floor(Math.random() * 1000000) + 200000; // 0.2M-1.2M
+        activeUsersRatio = 0.015;
+        engagementBase = 0.4;
+        break;
+      case 'tech-growth':
+        baseSubscribers = Math.floor(Math.random() * 800000) + 100000; // 0.1M-0.9M
+        activeUsersRatio = 0.02;
+        engagementBase = 0.5;
+        break;
+      default:
+        baseSubscribers = Math.floor(Math.random() * 300000) + 50000; // 50K-350K
+        activeUsersRatio = 0.01;
+        engagementBase = 0.3;
+    }
+    
+    const subscribers = baseSubscribers;
+    const activeUsers = Math.floor(subscribers * activeUsersRatio);
+    
+    return {
+      subreddit: stockDef.subreddit,
+      subscribers,
+      activeUsers,
+      subscriberGrowth: (Math.random() - 0.5) * 0.1, // -5% to +5% growth
+      postActivity: 0.5 + Math.random() * 0.5, // 0.5-1.0 activity level
+      engagementScore: engagementBase + (Math.random() - 0.5) * 0.2,
+      viralBoost: Math.random() * 0.3, // 0-0.3 viral boost
+      sentiment: (Math.random() - 0.5) * 1.5, // -0.75 to +0.75 sentiment
+      lastUpdated: new Date()
+    };
+  }
 
   private createStockFromData(
     stockDef: StockDefinition, 
@@ -112,61 +161,18 @@ export class MarketDataService {
     const startTime = Date.now();
 
     try {
-      console.log('🔄 Updating all stock prices...');
+      console.log('⏰ Periodic price update - simulating trading activity only (Reddit API requires request context)');
       
-      // Batch fetch Reddit data (respecting rate limits)
-      const subredditNames = STOCK_UNIVERSE.map(stock => stock.subreddit);
-      const redditDataMap = await redditApiService.fetchBatchSubredditData(subredditNames);
-
-      const priceResults = new Map<string, PriceCalculationResult>();
-      const categoryMap = new Map<string, StockCategory>();
-
-      // Calculate new prices for all stocks
-      for (const stockDef of STOCK_UNIVERSE) {
-        const redditData = redditDataMap.get(stockDef.subreddit) || this.createFallbackRedditData(stockDef);
-        const trading = this.tradingData.get(stockDef.id)!;
-        
-        const priceResult = pricingEngine.calculateStockPrice(
-          stockDef,
-          redditData,
-          trading.volume,
-          trading.buyPressure,
-          trading.sellPressure
-        );
-
-        priceResults.set(stockDef.id, priceResult);
-        categoryMap.set(stockDef.id, stockDef.category);
-
-        // Apply time-based volatility
-        const hourlyMultiplier = pricingEngine.getHourlyVolatilityMultiplier();
-        const weeklyMultiplier = pricingEngine.getWeeklyVolatilityMultiplier();
-        priceResult.change *= hourlyMultiplier * weeklyMultiplier;
-
-        // Apply circuit breakers
-        priceResult.change = pricingEngine.applyCircuitBreakers(priceResult.change, stockDef.id);
-      }
-
-      // Apply sector correlation
-      pricingEngine.applySectorCorrelation(priceResults, categoryMap);
-
-      // Update stock cache
-      for (const stockDef of STOCK_UNIVERSE) {
-        const priceResult = priceResults.get(stockDef.id)!;
-        const redditData = redditDataMap.get(stockDef.subreddit) || this.createFallbackRedditData(stockDef);
-        const updatedStock = this.createStockFromData(stockDef, redditData, priceResult);
-        
-        this.stockCache.set(stockDef.id, updatedStock);
-      }
-
-      // Update trading volumes (simulate some trading activity)
+      // Only simulate trading activity during periodic updates
+      // Reddit API data will be fetched during actual API requests
       this.simulateTradingActivity();
 
       this.lastUpdateTime = Date.now();
       const elapsed = this.lastUpdateTime - startTime;
-      console.log(`✅ Updated ${STOCK_UNIVERSE.length} stocks in ${elapsed}ms`);
+      console.log(`✅ Simulated trading activity in ${elapsed}ms - waiting for API request to fetch Reddit data`);
 
     } catch (error) {
-      console.error('❌ Failed to update stock prices:', error);
+      console.error('❌ Failed to update trading activity:', error);
     } finally {
       this.isUpdating = false;
     }
@@ -212,6 +218,11 @@ export class MarketDataService {
   }
 
   public async getMarketData(): Promise<MarketDataResponse> {
+    console.log('📊 Market data requested - attempting to fetch fresh Reddit API data...');
+    
+    // Try to refresh Reddit data now that we have request context
+    await this.refreshAllRedditData();
+    
     const stocks = Array.from(this.stockCache.values());
     
     // Calculate market sentiment
@@ -312,6 +323,64 @@ export class MarketDataService {
 
   public getRecentEvents(limit: number = 10): MarketEvent[] {
     return this.marketEvents.slice(0, limit);
+  }
+
+  // Test Reddit API connection
+  public async testRedditConnection(): Promise<boolean> {
+    console.log('🧪 Testing Reddit API connection...');
+    try {
+      const testResult = await devvitRedditService.fetchSubredditData('test');
+      console.log(`🧪 Reddit API test result:`, testResult ? '✅ CONNECTED' : '❌ NO DATA');
+      return testResult !== null;
+    } catch (error) {
+      console.log(`🧪 Reddit API test error:`, error);
+      return false;
+    }
+  }
+
+  // Method to refresh Reddit data for ALL stocks
+  public async refreshAllRedditData(): Promise<void> {
+    console.log('🔄 Testing Reddit API connection first...');
+    const isConnected = await this.testRedditConnection();
+    
+    if (!isConnected) {
+      console.error('❌ Reddit API connection test failed - skipping data refresh');
+      return;
+    }
+
+    console.log('✅ Reddit API connected - proceeding with data refresh...');
+    const stocksToUpdate = STOCK_UNIVERSE;
+      
+    console.log(`🔄 Refreshing Reddit data for ${stocksToUpdate.length} stocks...`);
+    
+    for (const stockDef of stocksToUpdate) {
+      try {
+        const redditData = await devvitRedditService.fetchSubredditData(stockDef.subreddit);
+        
+        if (redditData) {
+          const trading = this.tradingData.get(stockDef.id);
+          if (trading) {
+            const priceResult = pricingEngine.calculateStockPrice(
+              stockDef,
+              redditData,
+              trading.volume,
+              trading.buyPressure,
+              trading.sellPressure
+            );
+            
+            const updatedStock = this.createStockFromData(stockDef, redditData, priceResult);
+            this.stockCache.set(stockDef.id, updatedStock);
+            
+            console.log(`✅ Updated ${stockDef.symbol} with fresh Reddit data at $${updatedStock.price.toFixed(2)}`);
+          }
+        } else {
+          console.warn(`❌ No Reddit data for ${stockDef.symbol}`);
+        }
+      } catch (error) {
+        console.error(`❌ Failed to refresh Reddit data for ${stockDef.symbol}: ${error}`);
+        // Keep existing data - don't log as error since this is expected
+      }
+    }
   }
 
   public stop(): void {

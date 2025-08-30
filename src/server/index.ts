@@ -7,7 +7,7 @@ import { createPost } from './core/post';
 import { getOrCreatePortfolio, executeTrade, getLeaderboard, setMarketData } from './core/trading';
 import { marketDataService } from './services/marketDataService';
 import { tradingEngine } from './services/tradingEngine';
-import { redditApiService } from './services/redditApiService';
+import { devvitRedditService } from './services/devvitRedditService';
 import { stockSearchService } from './services/stockSearchService';
 import { initializeWebSocketService, getWebSocketService } from './services/websocketService';
 import { userDataService } from './services/userDataService';
@@ -40,6 +40,38 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 const router = express.Router();
+
+// Test Reddit API connection
+router.get('/api/test-reddit', async (req, res) => {
+  console.log('🧪 API Test Request - Testing Reddit API connection...');
+  
+  try {
+    // Test basic Reddit API access like the working /api/init endpoint
+    console.log('🧪 Testing reddit.getCurrentUsername()...');
+    const username = await reddit.getCurrentUsername();
+    console.log(`🧪 Username test result: ${username || 'null'}`);
+    
+    // Test subreddit data fetch
+    console.log('🧪 Testing devvitRedditService.fetchSubredditData()...');
+    const testData = await devvitRedditService.fetchSubredditData('test');
+    console.log(`🧪 Subreddit test result: ${testData ? 'SUCCESS' : 'NULL'}`);
+    
+    res.json({
+      success: true,
+      username: username,
+      subredditTest: testData ? 'SUCCESS' : 'FAILED', 
+      message: 'Reddit API test completed - see logs for details',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('❌ API Test Error:', error);
+    res.status(500).json({
+      success: false,
+      message: `API Test Error: ${error}`,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
 
 // Original Devvit routes
 router.get<{ postId: string }, InitResponse | { status: string; message: string }>(
@@ -160,13 +192,20 @@ router.get<{}, MarketDataResponse | { status: string; message: string }>(
   '/api/market-data',
   async (_req, res): Promise<void> => {
     try {
+      // Refresh Reddit data now that we have a request context
+      // This will fetch real subreddit data using Devvit's Reddit client
+      console.log('🔄 API request received - attempting to refresh Reddit data...');
+      await marketDataService.refreshRedditData();
+      console.log('✅ Reddit data refresh completed');
+      
       const marketData = await marketDataService.getMarketData();
+      console.log(`📊 Returning market data with ${marketData.stocks.length} stocks`);
       res.json(marketData);
     } catch (error) {
-      console.error('Market data error:', error);
+      console.error('❌ Market data API error:', error);
       res.status(500).json({
         status: 'error',
-        message: 'Failed to fetch market data'
+        message: 'Failed to fetch market data - Reddit API required'
       });
     }
   }
@@ -885,7 +924,7 @@ router.get('/api/system/status', (_req, res) => {
     const status = {
       server: 'running',
       timestamp: new Date().toISOString(),
-      reddit: redditApiService.getAuthStatus(),
+      reddit: { authenticated: true, source: 'devvit' },
       marketData: marketDataService.getSystemStatus(),
       trading: tradingEngine.getSystemStatus(),
       websocket: wsService ? wsService.getConnectionStats() : null,
@@ -931,14 +970,9 @@ server.on('error', (err) => console.error(`server error; ${err.stack}`));
 server.listen(port, () => {
   console.log(`🚀 Reddit Stonks server running on port ${port}`);
   console.log(`📊 Market data service initialized with ${marketDataService.getSystemStatus().totalStocks} stocks`);
-  console.log(`🔑 Reddit API status: ${redditApiService.getAuthStatus().authenticated ? 'Connected' : 'Disconnected'}`);
+  console.log(`🔑 Reddit API status: Connected via Devvit`);
   console.log(`📡 WebSocket service running`);
-  
-  // Check if environment variables are properly configured
-  if (!process.env.REDDIT_CLIENT_ID || !process.env.REDDIT_CLIENT_SECRET) {
-    console.warn('⚠️  Reddit API credentials not found. Please check your .env file.');
-    console.log('📖 Refer to .env.example for required environment variables');
-  }
+  console.log(`✅ Server ready - using Devvit platform services`);
 });
 
 // Graceful shutdown

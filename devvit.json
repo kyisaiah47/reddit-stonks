@@ -1,6 +1,6 @@
 {
   "$schema": "https://developers.reddit.com/schema/config-file.v1.json",
-  "name": "stonks-exchange",
+  "name": "reddit-stonks",
   "post": {
     "dir": "dist/client",
     "entrypoints": {

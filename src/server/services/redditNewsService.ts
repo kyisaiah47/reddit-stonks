@@ -1,4 +1,4 @@
-import { redditApiService } from './redditApiService';
+import { reddit } from '@devvit/web/server';
 
 export interface RedditNewsPost {
   id: string;
@@ -119,30 +119,33 @@ class RedditNewsService {
 
 
   private async fetchSubredditPosts(subreddit: string, limit: number): Promise<RedditNewsPost[]> {
-    const data = await redditApiService.makeRequest(`/r/${subreddit}/hot.json?limit=${limit}`);
-    
-    if (!data?.data?.children) {
-      return [];
-    }
+    try {
+      const posts = await reddit.getHotPosts({ 
+        subredditName: subreddit, 
+        limit: limit 
+      }).all();
+      
+      if (!posts || posts.length === 0) {
+        return [];
+      }
 
-    return data.data.children
-      .map((child: any) => {
-        const post = child.data;
-        return {
-          id: post.id,
-          title: post.title,
-          author: post.author,
-          subreddit: post.subreddit,
-          upvotes: post.ups || 0,
-          comments: post.num_comments || 0,
-          created: new Date(post.created_utc * 1000).toISOString(),
-          url: `https://reddit.com${post.permalink}`,
-          selftext: post.selftext,
-          flair: post.link_flair_text,
-          thumbnail: post.thumbnail !== 'self' && post.thumbnail !== 'default' ? post.thumbnail : undefined,
-          domain: post.domain
-        };
-      })
+      return posts
+        .map((post: any) => {
+          return {
+            id: post.id || '',
+            title: post.title || '',
+            author: post.authorName || 'unknown',
+            subreddit: post.subredditName || subreddit,
+            upvotes: post.score || 0,
+            comments: post.numberOfComments || 0,
+            created: post.createdAt ? post.createdAt.toISOString() : new Date().toISOString(),
+            url: post.url || `https://reddit.com/r/${subreddit}/comments/${post.id}`,
+            selftext: post.body || '',
+            flair: post.flair?.text || undefined,
+            thumbnail: post.thumbnail || undefined,
+            domain: post.domain || 'reddit.com'
+          };
+        })
       .filter((post: RedditNewsPost) => 
         // Filter out removed/deleted posts and ensure quality
         post.title && 
@@ -151,6 +154,10 @@ class RedditNewsService {
         !post.title.toLowerCase().includes('daily thread') &&
         !post.title.toLowerCase().includes('weekly thread')
       );
+    } catch (error) {
+      console.error(`Error fetching posts from r/${subreddit} via Devvit:`, error);
+      return [];
+    }
   }
 
   // Get news related to specific stock symbols
