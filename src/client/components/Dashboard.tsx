@@ -11,11 +11,8 @@ export const Dashboard = ({ portfolio, marketData, onStockClick }: DashboardProp
   const [leaderboard, setLeaderboard] = useState<LeaderboardResponse | null>(null);
 
   useEffect(() => {
-    // Fetch leaderboard data
-    fetch('/api/leaderboard')
-      .then(res => res.json())
-      .then(setLeaderboard)
-      .catch(console.error);
+    // No API calls - disabled leaderboard fetch
+    console.log('📊 API calls disabled - leaderboard fetch skipped');
   }, []);
 
   const topGainers = marketData?.stocks

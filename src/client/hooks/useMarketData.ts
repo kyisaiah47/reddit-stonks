@@ -11,26 +11,53 @@ export const useMarketData = (refreshInterval: number = 60000) => {
   const fetchMarketData = useCallback(async () => {
     try {
       setError(null);
-      console.log('📊 Fetching real Reddit data using Devvit API...');
+      console.log('📊 Requesting Reddit market data from server...');
       
-      // Use the Reddit API endpoints you provided!
-      // This should be called from client-side with Devvit's Reddit API
-      try {
-        // For now, let's simulate the Reddit API structure while we figure out client-side access
-        console.log('📊 Reddit API integration: getSubredditInfoByName, getHotPosts, getNewPosts, getRisingPosts');
+      // Check if we're in Devvit webview context
+      if (window.parent && window.parent !== window) {
+        // Post message to Devvit server to fetch real Reddit data
+        window.parent.postMessage({
+          type: 'getMarketData'
+        }, '*');
         
-        // TODO: Reddit API calls will be added once we figure out proper client-side import
-        console.log('📊 Reddit API integration pending - using mock data for now');
+        // Set up listener for response
+        const handleMessage = (event: MessageEvent) => {
+          if (event.data.type === 'marketDataResponse') {
+            console.log('✅ Received Reddit market data:', event.data.data);
+            // Convert Reddit data to our format and use it
+            const marketDataResponse = generateMockMarketData(); // Still using mock for now
+            setMarketData(marketDataResponse);
+            setLastUpdated(new Date());
+            setLoading(false);
+            window.removeEventListener('message', handleMessage);
+          } else if (event.data.type === 'marketDataError') {
+            console.error('❌ Reddit API error:', event.data.error);
+            setError(event.data.error);
+            setLoading(false);
+            window.removeEventListener('message', handleMessage);
+          }
+        };
         
-      } catch (redditError) {
-        console.error('Reddit API error:', redditError);
+        window.addEventListener('message', handleMessage);
+        
+        // Timeout fallback
+        setTimeout(() => {
+          console.log('⏰ Reddit API timeout, using mock data');
+          const marketDataResponse = generateMockMarketData();
+          setMarketData(marketDataResponse);
+          setLastUpdated(new Date());
+          setLoading(false);
+          window.removeEventListener('message', handleMessage);
+        }, 5000);
+        
+      } else {
+        // Not in webview, use mock data
+        console.log('📊 Not in webview context, using mock data');
+        const marketDataResponse = generateMockMarketData();
+        setMarketData(marketDataResponse);
+        setLastUpdated(new Date());
+        setLoading(false);
       }
-      
-      // For now use mock data but structure it like real Reddit data would be
-      const marketDataResponse = generateMockMarketData();
-      setMarketData(marketDataResponse);
-      setLastUpdated(new Date());
-      setLoading(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch market data');
       setLoading(false);

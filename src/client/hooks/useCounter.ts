@@ -28,24 +28,13 @@ export const useCounter = () => {
 
   const update = useCallback(
     async (action: 'increment' | 'decrement') => {
-      if (!postId) {
-        console.error('No postId – cannot update counter');
-        return;
-      }
-      try {
-        const res = await fetch(`/api/${action}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({}),
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data: IncrementResponse | DecrementResponse = await res.json();
-        setState((prev) => ({ ...prev, count: data.count }));
-      } catch (err) {
-        console.error(`Failed to ${action}`, err);
-      }
+      // No API calls needed - this is mock data for now
+      setState((prev) => ({ 
+        ...prev, 
+        count: action === 'increment' ? prev.count + 1 : prev.count - 1 
+      }));
     },
-    [postId]
+    []
   );
 
   const increment = useCallback(() => update('increment'), [update]);

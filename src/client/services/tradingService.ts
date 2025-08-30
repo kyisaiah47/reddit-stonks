@@ -6,18 +6,10 @@ class TradingService {
 
   async getPortfolio(userId: string): Promise<Portfolio> {
     try {
-      const response = await fetch(`/api/portfolio?userId=${userId}`);
-      if (response.ok) {
-        const data = await response.json();
-        const portfolio = data.portfolio;
-        
-        console.log(`📊 Loaded portfolio for ${userId} from Redis via API`);
-        return portfolio;
-      } else {
-        console.error('Portfolio API error:', response.status, response.statusText);
-      }
+      // No API calls - using localStorage fallback for now
+      console.log('📊 API calls disabled - using localStorage fallback');
     } catch (error) {
-      console.error('Error fetching portfolio from API:', error);
+      console.error('Error in trading service:', error);
     }
 
     // Fallback to default portfolio (should rarely happen with Redis backend)
@@ -29,33 +21,17 @@ class TradingService {
 
   async executeTrade(userId: string, trade: TradeRequest, currentStocks: SubredditStock[]): Promise<TradeResponse> {
     try {
-      const response = await fetch('/api/trade', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ ...trade, userId }),
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        console.log(`📈 Trade executed for ${userId}: ${trade.type} ${trade.shares} ${result.trade?.symbol || 'shares'}`);
-        return result;
-      } else {
-        const errorData = await response.json();
-        console.error('Trade API error:', response.status, errorData);
-        return {
-          success: false,
-          message: errorData.message || 'Trade execution failed'
-        };
-      }
+      // No API calls - using mock response for now
+      console.log('📊 API calls disabled - returning mock trade response');
     } catch (error) {
-      console.error('Error executing trade via API:', error);
-      return {
-        success: false,
-        message: 'Network error: Failed to execute trade'
-      };
+      console.error('Error in trading service:', error);
     }
+
+    // Mock successful trade response
+    return {
+      success: true,
+      message: `Mock trade executed: ${trade.type} ${trade.shares} shares`
+    };
   }
 
   updatePortfolioWithCurrentPrices(portfolio: Portfolio, currentStocks: SubredditStock[]): Portfolio {

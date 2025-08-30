@@ -2,6 +2,10 @@ import { defineConfig } from 'vite';
 import { builtinModules } from 'node:module';
 
 export default defineConfig({
+  esbuild: {
+    jsx: 'automatic',
+    jsxImportSource: '@devvit/public-api',
+  },
   ssr: {
     noExternal: true,
   },

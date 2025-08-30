@@ -79,20 +79,20 @@ export const Trading = ({ stocks, portfolio, onTradeComplete }: TradingProps) =>
     };
 
     try {
-      const response = await fetch('/api/trade', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(tradeRequest)
-      });
+      // No API calls - mock trade execution
+      console.log('📊 API calls disabled - mock trade execution');
+      
+      // Mock successful trade
+      const mockResult: TradeResponse = {
+        success: true,
+        message: `Mock trade executed: ${tradeType} ${shares} shares`
+      };
 
-      const result: TradeResponse = await response.json();
-
-      if (result.success && result.updatedPortfolio) {
-        setMessage(`✅ ${tradeType.toUpperCase()} order executed: ${shares} shares of ${selectedStock.symbol} at ${formatCurrency(result.trade!.price)}`);
-        onTradeComplete(result.updatedPortfolio);
+      if (mockResult.success) {
+        setMessage(`✅ ${tradeType.toUpperCase()} order executed: ${shares} shares of ${selectedStock.symbol} at ${formatCurrency(selectedStock.price)}`);
         setShares(1);
       } else {
-        setMessage(`❌ Trade failed: ${result.message}`);
+        setMessage(`❌ Trade failed: ${mockResult.message}`);
       }
     } catch (error) {
       setMessage(`❌ Error executing trade: ${error}`);
