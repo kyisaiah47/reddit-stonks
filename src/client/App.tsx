@@ -55,28 +55,11 @@ export const App = () => {
   // Market data hook
   const { marketData, loading: marketLoading, error: marketError, refreshData } = useMarketData();
 
-  // Fetch news data at app level
+  // Mock news data for now - Reddit API should be integrated properly with Devvit
   useEffect(() => {
-    const fetchNews = async () => {
-      try {
-        setNewsError(null);
-        setNewsLoading(true);
-        const response = await fetch('/api/news?limit=15');
-        if (response.ok) {
-          const data = await response.json();
-          setNewsData(data);
-        } else {
-          setNewsError('Failed to fetch Reddit news');
-        }
-      } catch (err) {
-        setNewsError('Network error fetching news');
-        console.error('News fetch error:', err);
-      } finally {
-        setNewsLoading(false);
-      }
-    };
-
-    fetchNews();
+    console.log('📰 Using mock news data - Reddit API integration pending');
+    setNewsData(null); // No news for now
+    setNewsLoading(false);
   }, []);
   
   // Portfolio hook

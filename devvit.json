@@ -13,6 +13,28 @@
     "dir": "dist/server",
     "entry": "index.cjs"
   },
+  "permissions": {
+    "http": {
+      "enable": true,
+      "domains": ["api.reddit.com", "oauth.reddit.com"]
+    }
+  },
+  "settings": {
+    "global": {
+      "debugMode": {
+        "type": "boolean",
+        "label": "Enable Debug Mode",
+        "defaultValue": false
+      }
+    },
+    "subreddit": {
+      "enableRealTimeUpdates": {
+        "type": "boolean",
+        "label": "Enable Real-time Market Updates",
+        "defaultValue": true
+      }
+    }
+  },
   "media": {},
   "menu": {
     "items": [

@@ -12,21 +12,8 @@ export const useMarketData = (refreshInterval: number = 60000) => {
     try {
       setError(null);
       
-      // Try to fetch from API first
-      try {
-        const response = await fetch('/api/market-data');
-        if (response.ok) {
-          const data = await response.json();
-          setMarketData(data);
-          setLastUpdated(new Date());
-          setLoading(false);
-          return;
-        }
-      } catch (apiError) {
-        console.warn('API not available, using mock data');
-      }
-
-      // Fallback to mock data
+      // Use mock data for now - Reddit API calls should be server-side in Devvit
+      console.log('📊 Using mock market data - Reddit API integration pending');
       const marketDataResponse = generateMockMarketData();
       setMarketData(marketDataResponse);
       setLastUpdated(new Date());
