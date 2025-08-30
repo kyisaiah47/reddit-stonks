@@ -15,22 +15,15 @@ export const useCounter = () => {
   });
   const [postId, setPostId] = useState<string | null>(null);
 
-  // fetch initial data
+  // NO API CALLS - use mock data for now, Reddit API integration coming
   useEffect(() => {
-    const init = async () => {
-      try {
-        const res = await fetch('/api/init');
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data: InitResponse = await res.json();
-        if (data.type !== 'init') throw new Error('Unexpected response');
-        setState({ count: data.count, username: data.username, loading: false });
-        setPostId(data.postId);
-      } catch (err) {
-        console.error('Failed to init counter', err);
-        setState((prev) => ({ ...prev, loading: false }));
-      }
-    };
-    void init();
+    console.log('🔄 Initializing Reddit Stonks with mock data');
+    setState({ 
+      count: 42, 
+      username: 'reddit-trader', 
+      loading: false 
+    });
+    setPostId('reddit-stonks-dev');
   }, []);
 
   const update = useCallback(
