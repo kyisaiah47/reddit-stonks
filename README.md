@@ -4,6 +4,9 @@
 
 A fully interactive trading platform where users buy and sell "shares" in subreddits, complete with **real-time price animations**, **meme-powered notifications**, **swipe-to-trade mechanics**, and **achievement systems**.
 
+[![YouTube Demo](https://img.shields.io/badge/▶️%20Watch%20on%20YouTube-red?logo=youtube&logoColor=white)](https://www.youtube.com/watch?v=UNumNpU0XWo)
+[![Watch the demo](https://img.youtube.com/vi/UNumNpU0XWo/maxresdefault.jpg)](https://www.youtube.com/watch?v=UNumNpU0XWo)
+
 ---
 
 ## 🎮 **What Makes This Special**
