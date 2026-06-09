@@ -1,233 +1,60 @@
-# 📊 STONKS EXCHANGE 🚀
+<div align="center">
 
-> **"Bloomberg Terminal meets Reddit"** - The ultimate financial trading simulation that gamifies Reddit's social dynamics
+<!-- BANNER_PLACEHOLDER -->
 
-A fully interactive trading platform where users buy and sell "shares" in subreddits, complete with **real-time price animations**, **meme-powered notifications**, **swipe-to-trade mechanics**, and **achievement systems**.
+# 📈 Reddit Stonks
 
-[![YouTube Demo](https://img.shields.io/badge/▶️%20Watch%20on%20YouTube-red?logo=youtube&logoColor=white)](https://www.youtube.com/watch?v=UNumNpU0XWo)
-[![Watch the demo](https://img.youtube.com/vi/UNumNpU0XWo/maxresdefault.jpg)](https://www.youtube.com/watch?v=UNumNpU0XWo)
+**Trade shares in subreddits like stocks — where memes move markets**
 
----
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
+[![Framer Motion](https://img.shields.io/badge/Framer%20Motion-0055FF?style=for-the-badge&logo=framer&logoColor=white)](https://www.framer.com/motion/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
+[![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)](https://redis.io/)
+[![Devvit](https://img.shields.io/badge/Reddit%20Devvit-FF4500?style=for-the-badge&logo=reddit&logoColor=white)](https://developers.reddit.com/)
 
-## 🎮 **What Makes This Special**
+</div>
 
-### **Professional Trading Interface**
-- **Animated Stock Ticker**: Continuous scrolling prices with Reddit memes
-- **Real-time Price Animations**: Pulsing effects, number counters, particle effects
-- **Dynamic Market Sentiment Meter**: BULLISH 🚀 | BEARISH 🐻 | NEUTRAL 😐
-- **Live Activity Feed**: Real-time trade alerts and market events
+<br/>
 
-### **Reddit-Native Experience** 
-- **Meme-Powered Messages**: "💎🙌 DIAMOND HANDS ACTIVATED", "🚀 TO THE MOON"
-- **Achievement System**: "Paper Hands", "Diamond Hands", "Moon Mission"
-- **Reddit Personality**: Every interaction feels authentically Reddit
+Reddit Stonks is a fully interactive trading platform built on Reddit's Devvit platform — buy and sell "shares" in subreddits as if they were stocks, with real-time price animations, meme-powered notifications, and a swipe-to-trade mobile interface. It turns Reddit's social dynamics into a gamified market where diamond hands are rewarded and paper hands are called out. Built for the Reddit Fun and Games with Devvit Web Hackathon 2025.
 
-### **Next-Gen Mobile UX**
-- **Swipe-to-Trade**: Left swipe = SELL 📉 | Right swipe = BUY 🚀
-- **Framer Motion Animations**: Smooth, professional-grade animations
-- **Haptic Feedback**: Phone vibration on successful trades
-- **One-Handed Operation**: All key functions easily accessible
+## ✨ Features
 
----
+- **Swipe-to-Trade** — Right swipe to BUY, left swipe to SELL; touch-native gestures with haptic feedback on successful trades
+- **Real-Time Price Animations** — Pulsing flash effects, smooth number counters, and floating particle effects respond to every market move
+- **Meme-Powered Notifications** — "💎🙌 DIAMOND HANDS ACTIVATED" and "🚀 TO THE MOON" messages fire on key trade events, keeping the Reddit personality front and center
+- **Dynamic Market Sentiment Meter** — A live BULLISH / BEARISH / NEUTRAL indicator shifts the entire UI color palette in real time
+- **Achievement System** — Unlock badges like "Welcome to the Casino" (first trade), "Diamond Hands" (hold through a 20% dip), and "Moon Mission" (50% portfolio gain)
+- **Live Leaderboard** — Compete against other traders ranked by portfolio value, with a live activity feed showing trades as they happen
 
-## 🚀 **Live Demo Features**
+## 🎥 Demo
 
-### **🎯 Enhanced Dashboard**
-```
-📊 STONKS EXCHANGE 🚀
-┌─────────────────────────────────────┐
-│ [===== Animated Ticker =====] │
-│ WSB $45.67 🚀 +2.34% • CRYP $78.34  │
-├─────────────────────────────────────┤
-│ Portfolio: $12,847 📈 +28.47%      │
-│ Market Sentiment: 🚀 BULLISH AF    │
-└─────────────────────────────────────┘
-```
+[![Watch Demo](https://img.shields.io/badge/YouTube-Watch%20Demo-FF0000?style=for-the-badge&logo=youtube&logoColor=white)](https://www.youtube.com/watch?v=UNumNpU0XWo)
 
-### **💫 Real-Time Animations**
-- **Price Updates**: Flash green/red with pulse effects
-- **Number Counters**: Smooth counting animations up/down
-- **Particle Effects**: Floating stonks emojis and sparkles
-- **Background Motion**: Dynamic particles responding to market activity
+## 🛠️ Tech Stack
 
-### **📱 Mobile-First Polish**
-- **Swipe Gestures**: Quick buy/sell with finger gestures
-- **Responsive Cards**: Smooth scaling and rotation
-- **Touch Feedback**: Visual and haptic responses
-- **Optimized for 375×584 viewport**
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React + TypeScript + Framer Motion |
+| Styling | Tailwind CSS |
+| Animations | Framer Motion (swipe gestures, micro-interactions, page transitions) |
+| Backend | Express + Redis (portfolio persistence, trading engine) |
+| Platform | Reddit Devvit (Web Views) |
+| State | Custom React hooks (`useMarketData`, `usePortfolio`, `useMemeMessages`) |
 
----
+## 🚀 Getting Started
 
-## 🎨 **Visual Excellence**
-
-### **Dynamic Color System**
-```css
-/* Market sentiment affects entire UI */
-🚀 Bullish: Green gradients, upward animations
-🐻 Bearish: Red gradients, downward motion  
-😐 Neutral: Blue/gray balanced palette
-```
-
-### **Micro-Animations Everywhere**
-- Hover effects with scale transforms
-- Loading spinners with custom timing
-- Page transitions with blur effects
-- Card interactions with depth shadows
-
----
-
-## 🏗️ **Technical Implementation**
-
-### **Frontend Excellence**
-```typescript
-// Framer Motion + React + TypeScript
-├── Animated Components
-│   ├── StockTicker (continuous scroll)
-│   ├── MarketSentimentMeter (live updates)
-│   ├── LiveActivityFeed (real-time alerts)
-│   └── AnimatedPrice (pulse effects)
-├── Enhanced UX
-│   ├── SwipeableCard (touch gestures)
-│   ├── MemeMessages (Reddit personality)
-│   └── Achievement System (gamification)
-└── State Management
-    ├── useMarketData (real-time prices)
-    ├── usePortfolio (P&L tracking)
-    └── useMemeMessages (notifications)
-```
-
-### **Backend Power**
-```javascript
-// Express + Redis + Trading Engine
-├── Real-Time Market Data
-├── Portfolio Management
-├── Trade Execution Engine
-├── Leaderboard System
-└── Achievement Tracking
-```
-
----
-
-## 🎮 **Game Mechanics**
-
-### **💰 Trading System**
-- **Starting Capital**: $10,000 Reddit Coins
-- **5 Subreddit Stocks**: WSB, TECH, CRYP, STCK, GAME
-- **Order Types**: Market orders, Limit orders
-- **Real-Time P&L**: Live profit/loss calculations
-
-### **🏆 Achievement System**
-- **"Welcome to the Casino"** - First trade
-- **"💎🙌 Diamond Hands"** - Hold through 20% dip
-- **"🚀 Moon Mission"** - 50% portfolio gain
-- **"📄🙌 Paper Hands"** - Sell at loss within 24h
-
-### **📊 Competition Features**
-- **Live Leaderboard**: Top traders ranked by portfolio value
-- **Social Trading**: Follow successful investors
-- **Market Events**: Detect Reddit drama and volatility spikes
-
----
-
-## 🎯 **Why This Wins the Hackathon**
-
-### **✅ Judging Criteria Alignment**
-
-| Criteria | Implementation |
-|----------|----------------|
-| **Delightful UX** | Professional trading interface with smooth Framer Motion animations |
-| **Polish** | Production-ready financial dashboard with micro-interactions |
-| **Reddit-y** | Transforms Reddit's core social dynamics into engaging gameplay |
-| **Quality UGC** | Investment analysis, strategy sharing, market commentary potential |
-| **Recurring Content** | Daily markets, live sentiment, real-time trading activity |
-
-### **🚀 Unique Value Proposition**
-- **Educational**: Teaches finance concepts through Reddit exploration
-- **Social**: Creates new cross-community interactions and discovery
-- **Engaging**: Real stakes with authentic Reddit data and culture
-- **Scalable**: Foundation for unlimited assets and advanced features
-
----
-
-## 🛠 **Getting Started**
-
-### **Quick Start**
 ```bash
-git clone [your-repo]
-cd stonks-exchange
+git clone https://github.com/kyisaiah47/reddit-stonks
+cd reddit-stonks
 npm install
-npm run dev
+npm run dev       # Start development with live reload
+npm run build     # Production build
+npm run deploy    # Deploy to Reddit Devvit
+npm run check     # Type check + lint + format
 ```
 
-### **Available Commands**
-```bash
-npm run dev      # Start development (live reload)
-npm run build    # Build for production
-npm run deploy   # Deploy to Reddit Devvit
-npm run check    # Type check + lint + format
-```
+## 📄 License
 
----
-
-## 📈 **Enhanced Features Implemented**
-
-### **🎨 Visual Polish**
-- ✅ Animated stock ticker with continuous scrolling
-- ✅ Real-time price animations with pulsing effects
-- ✅ Dynamic market sentiment meter with personality
-- ✅ Live activity feed with trade alerts
-- ✅ Meme-powered trading messages
-- ✅ Gamified achievements and badges
-- ✅ Framer Motion micro-animations
-- ✅ Mobile-optimized swipe gestures
-
-### **⚡ Technical Excellence**
-- ✅ TypeScript throughout for type safety
-- ✅ Framer Motion for professional animations
-- ✅ React hooks for clean state management
-- ✅ Responsive design with Tailwind CSS
-- ✅ Real-time data updates every 30 seconds
-- ✅ Portfolio persistence with Redis fallback
-- ✅ Trading engine with P&L calculations
-
----
-
-## 🎪 **Demo Highlights**
-
-### **"Sir, This Is a Casino" Experience**
-1. **Open App**: Greeted with animated ticker and meme messages
-2. **Explore Market**: Swipe through stocks with smooth animations
-3. **Execute Trades**: "💎🙌 DIAMOND HANDS ACTIVATED" notifications
-4. **Track Portfolio**: Real-time P&L with particle effects
-5. **Compete**: Climb leaderboard with achievement unlocks
-
-### **Reddit Culture Integration**
-- Every price change triggers meme reactions
-- Achievement names use Reddit terminology
-- UI language matches WSB/Reddit culture
-- Trading confirmations feel like upvotes
-
----
-
-## 🏅 **Success Metrics**
-
-- **Daily Active Traders**: Users making at least one trade per day
-- **Cross-Subreddit Discovery**: Users exploring new communities through trading  
-- **Content Quality**: Research-driven investment decisions
-- **Community Building**: Investment clubs forming around shared interests
-
----
-
-## 🎯 **Perfect for Reddit**
-
-This isn't just another trading simulator - it's **Reddit's trading platform**. Every design decision respects Reddit culture while introducing sophisticated financial concepts in an approachable, gamified way.
-
-**Ready to make some Reddit stonks?** 🚀📈💎🙌
-
----
-
-*Remember: This is a simulation game. No real money or securities are involved. Always DYOR (Do Your Own Research) and this is NFA (Not Financial Advice). To the moon! 🚀*
-
----
-
-**Built with ❤️ for the Reddit Fun and Games with Devvit Web Hackathon 2025**
+MIT
